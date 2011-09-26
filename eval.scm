@@ -1,12 +1,10 @@
 (use srfi-69)
 
-(define (apply- p)
-  (apply f args))
-
 (define builtins `((+ . ,+)
                    (- . ,-)
                    (/ . ,/)
                    (* . ,*)))
+
 (define symbols (alist->hash-table builtins))
 
 (define (symbol-resolve symbol)
@@ -31,7 +29,7 @@
 (define (defininition-value sexpr)
   (eval- (caddr sexpr)))
 
-(define (create-binding! name val)
+(define (create-binding! name val env)
   (hash-table-set! symbols name val))
 
 (define (application? l)
@@ -50,24 +48,44 @@
        (parameter-list? (cadr sexpr))
        (thunk? (cddr sexpr))))
 
-(define (proc-params s)
-  (car s))
+(define (lambda-params s)
+  (cadr s))
 
-(define (proc-sequence s)
+(define (lambda-sequence s)
   (cons 'begin (cddr s)))
 
-(define (create-procedure params seq)
-  (list params seq))
+(define (create-procedure env params seq)
+  (list env params seq))
 
-(define (eval- sexpr)
+(define (proc-env p)
+  (car p))
+
+(define (proc-params p)
+  (cadr p))
+
+(define (proc-sequence p)
+  (caddr p))
+
+(define (apply- p args env)
+  ; create frame with params
+  (let ((stack (extend-env
+                 (proc-env p)
+                 args)))
+    (set-env! stack)
+    (eval- (proc-sequence p))
+    (set-env! (pop-env stack))))
+
+(define (eval- sexpr env)
     (cond ((number? sexpr) sexpr)
-          ((symbol? sexpr) (symbol-resolve sexpr))
+          ((symbol? sexpr) (symbol-resolve env sexpr))
           ((definition? sexpr)
-           (create-binding! (definition-name sexpr)
+           (create-binding! env
+                            (definition-name sexpr)
                             (defininition-value sexpr)))
           ((lambda? sexpr)
-           (create-procedure (proc-params sexpr)
-                             (proc-sequence sexpr)))
+           (create-procedure env
+                             (lambda-params sexpr)
+                             (lambda-sequence sexpr)))
           ((application? sexpr)
            (apply- (symbol-resolve (car sexpr))
                    (list-of-values (cdr sexpr))))
