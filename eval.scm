@@ -40,6 +40,9 @@
 (define (parameter-list? s)
   (list? s))
 
+(define (tagged-list? sexpr tag)
+  (eq? (car sexpr) tag))
+
 (define (thunk? s)
   (not (null? s)))
 
@@ -52,8 +55,9 @@
   (cadr s))
 
 (define (lambda-sequence s)
-  (cons 'begin (cddr s)))
+  (cons 'do (cddr s)))
 
+;; procs
 (define (create-procedure env params seq)
   (list env params seq))
 
@@ -66,18 +70,32 @@
 (define (proc-sequence p)
   (caddr p))
 
+(define (sequence? sexpr)
+  (tagged-list? sexpr 'do))
+
+(define (last-exp? seq)
+  (null? (cdr seq)))
+
+(define (eval-sequence seq env)
+  (cond ((last-exp? seq) (eval- (car seq) env))
+		(else (eval- (car seq) env)
+			  (eval-sequence (cdr seq) env))))
+
+;; environment
+(define (extend-env env names values)
+  (cons (cons names values) env))
+
 (define (apply- p args env)
-  ; create frame with params
-  (let ((stack (extend-env
-                 (proc-env p)
-                 args)))
-    (set-env! stack)
-    (eval- (proc-sequence p))
-    (set-env! (pop-env stack))))
+  (eval- (proc-sequence p)
+		 (extend-env
+		   (proc-env p)
+		   (proc-params p)
+		   args)))
 
 (define (eval- sexpr env)
     (cond ((number? sexpr) sexpr)
           ((symbol? sexpr) (symbol-resolve env sexpr))
+		  ((sequence? sexpr) (eval-sequence (cdr sexpr)))
           ((definition? sexpr)
            (create-binding! env
                             (definition-name sexpr)
