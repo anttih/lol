@@ -29,8 +29,38 @@
 (define (defininition-value sexpr)
   (eval- (caddr sexpr)))
 
-(define (create-binding! name val env)
-  (hash-table-set! symbols name val))
+(define (frame-bind frame name val)
+    (cons (cons name (car frame))
+          (cons val (cdr frame))))
+
+(define (define-variable! env name val)
+    (set-car! env (frame-bind (car env) name val)))
+
+(define (lookup-variable-value frame name)
+    (define (search-frame names values)
+        (if (null? names)
+          #f
+          (if (eq? (car names) name)
+            (car values)
+            (search-frame (cdr names)
+                          (cdr values)))))
+    (search-frame (car frame)
+                  (cdr frame)))
+
+(define (empty-environment? env)
+    (null? env))
+
+(define (error msg)
+    (print "Error: " msg))
+
+; lookup a binding in the environment
+(define (lookup-variable env name)
+    (if (empty-environment? env)
+      (error "Variable not bound")
+      (let ((found (lookup-variable-value (car env) name)))
+        (if found
+          found
+          (lookup-variable (cdr env) name)))))
 
 (define (application? l)
   (let ((first (car l)))
@@ -94,10 +124,10 @@
 
 (define (eval- sexpr env)
     (cond ((number? sexpr) sexpr)
-          ((symbol? sexpr) (symbol-resolve env sexpr))
+          ((symbol? sexpr) (lookup-variable env sexpr))
 		  ((sequence? sexpr) (eval-sequence (cdr sexpr)))
           ((definition? sexpr)
-           (create-binding! env
+           (define-variable! env
                             (definition-name sexpr)
                             (defininition-value sexpr)))
           ((lambda? sexpr)
