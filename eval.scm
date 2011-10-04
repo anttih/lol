@@ -63,9 +63,7 @@
           (lookup-variable (cdr env) name)))))
 
 (define (application? l)
-  (let ((first (car l)))
-    (and (symbol? first)
-         (procedure? (symbol->proc first)))))
+    (pair? l))
 
 (define (parameter-list? s)
   (list? s))
@@ -88,8 +86,8 @@
   (cons 'do (cddr s)))
 
 ;; procs
-(define (create-procedure env params seq)
-  (list env params seq))
+(define (make-compound-procedure env params seq)
+  (list 'procedure env params seq))
 
 (define (proc-env p)
   (car p))
@@ -115,12 +113,27 @@
 (define (extend-env env names values)
   (cons (cons names values) env))
 
-(define (apply- p args env)
-  (eval- (proc-sequence p)
+(define (primitive-procedure? s)
+    (procedure? (lookup-variable s)))
+
+(define (compound-procedure? p)
+    (tagged-list? p 'procedure))
+
+(define (apply-compound-procedure p args env)
+    (eval- (proc-sequence p)
 		 (extend-env
 		   (proc-env p)
 		   (proc-params p)
 		   args)))
+
+(define (apply-primitive-procedure p args)
+    (apply p args))
+
+(define (apply- p args env)
+  (cond ((primitive-procedure? p)
+         (apply-primitive-procedure p))
+        ((compound-procedure? p)
+         (apply-compound-procedure p args env))))
 
 (define (eval- sexpr env)
     (cond ((number? sexpr) sexpr)
@@ -131,7 +144,7 @@
                             (definition-name sexpr)
                             (defininition-value sexpr)))
           ((lambda? sexpr)
-           (create-procedure env
+           (make-compound-procedure env
                              (lambda-params sexpr)
                              (lambda-sequence sexpr)))
           ((application? sexpr)
