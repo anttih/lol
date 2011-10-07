@@ -2,8 +2,19 @@
 (load "eval.scm")
 
 
+; lambda
 (test "lambda with empty param list" #t (lambda? '(fn () 1)))
 (test "lambda with a thunk" #t (lambda? '(fn () (a 1) (b 2))))
+(test "lambda has no params"
+      '()
+      (lambda-params '(fn () (hello))))
+(test "lambda has one param"
+      '(name)
+      (lambda-params '(fn (name) (hello))))
+(test "lambda has a body sequence"
+      '(do (hello) (world))
+      (lambda-sequence '(fn () (hello) (world))))
+
 
 (test "special form def"
       #t
@@ -34,6 +45,9 @@
 
 ; procedures
 ;(test "not a primitive procedure" #f (primitive-procedure? 
+;(test "procedure has a sequence"
+;      '(do (hello))
+;      (proc-sequence '(
 
 (define empty-env (make-environment '() '()))
 (define (evaluate e)
@@ -46,3 +60,16 @@
       (begin
           (evaluate '(do (def a 3)
                             (+ a 1)))))
+
+(test "define and apply lambda with no params"
+      42
+      (evaluate '(do
+                   (def test (fn () 42))
+                   (test))))
+
+(test "define lambda"
+      16
+      (evaluate '(do
+                   (def square (fn (x) (* x x)))
+                   (square 4))))
+                    

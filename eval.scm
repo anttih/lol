@@ -1,22 +1,5 @@
 (use srfi-69)
 
-(define builtins `((+ . ,+)
-                   (- . ,-)
-                   (/ . ,/)
-                   (* . ,*)))
-
-(define symbols (alist->hash-table builtins))
-
-(define (symbol-resolve symbol env)
-  (hash-table-ref symbols symbol))
-
-(define (symbol->proc symbol)
-  (if (hash-table-exists? symbols symbol)
-    (let ((val (hash-table-ref symbols symbol)))
-      (if (procedure? val)
-        val
-        #f))))
-
 (define (definition? sexpr)
   (and (list? sexpr)
        (= 3 (length sexpr))
@@ -93,10 +76,10 @@
   (car p))
 
 (define (proc-params p)
-  (cadr p))
+  (caddr p))
 
 (define (proc-sequence p)
-  (caddr p))
+  (cadddr p))
 
 (define (sequence? sexpr)
   (tagged-list? sexpr 'do))
