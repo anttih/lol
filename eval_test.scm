@@ -18,6 +18,12 @@
       '((b a) . (2 1))
       (frame-bind '((a) . (1)) 'b 2))
 
+(test "define variable"
+      '(((new) 2))
+      (let ((env (make-environment '() '())))
+          (define-variable! env 'new 2)
+          env))
+
 (test "lookup variable value in frame"
       2
       (lookup-variable-value '((a b) . (2 3)) 'a))
@@ -30,3 +36,4 @@
 
 (test "lookup variable in environment" 2 (lookup-variable test-env 'a))
 (test "shadow value" 3 (lookup-variable test-env 'b))
+

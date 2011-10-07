@@ -110,6 +110,9 @@
 			  (eval-sequence (cdr seq) env))))
 
 ;; environment
+(define (make-environment names values)
+  (extend-env '() names values))
+
 (define (extend-env env names values)
   (cons (cons names values) env))
 
@@ -160,6 +163,6 @@
                     (list-of-values (cdr sexpr))))))
 
 (define (repl-)
-  (print ";lol>")
+  (display ";lol> ")
   (print (eval- (read)))
   (repl-))
