@@ -1,18 +1,13 @@
-
 (use test)
 (load "eval.scm")
 
-(test "simple arithmetic" 2 (eval- '(+ 1 1)))
-(test "nested arithmetic" 5 (eval- '(+ (* 2 2) 1)))
-
-(test "variables"
-      4
-      (begin
-          (eval- '(def a 3))
-          (eval- '(+ a 1))))
 
 (test "lambda with empty param list" #t (lambda? '(fn () 1)))
 (test "lambda with a thunk" #t (lambda? '(fn () (a 1) (b 2))))
+
+(test "special form def"
+      #t
+      (definition? '(def a 1)))
 
 (test "define in frame"
       '((b a) . (2 1))
@@ -37,3 +32,17 @@
 (test "lookup variable in environment" 2 (lookup-variable test-env 'a))
 (test "shadow value" 3 (lookup-variable test-env 'b))
 
+; procedures
+;(test "not a primitive procedure" #f (primitive-procedure? 
+
+(define empty-env (make-environment '() '()))
+(define (evaluate e)
+  (eval- e (make-environment '(+ - / *) (list + - / *))))
+
+(test "simple arithmetic" 2 (evaluate '(+ 1 1)))
+(test "nested arithmetic" 5 (evaluate '(+ (* 2 2) 1)))
+(test "variables"
+      4
+      (begin
+          (evaluate '(do (def a 3)
+                            (+ a 1)))))

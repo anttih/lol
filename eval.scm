@@ -7,7 +7,7 @@
 
 (define symbols (alist->hash-table builtins))
 
-(define (symbol-resolve symbol)
+(define (symbol-resolve symbol env)
   (hash-table-ref symbols symbol))
 
 (define (symbol->proc symbol)
@@ -26,8 +26,8 @@
 (define (definition-name sexpr)
   (cadr sexpr))
 
-(define (defininition-value sexpr)
-  (eval- (caddr sexpr)))
+(define (definition-value sexpr env)
+  (eval- (caddr sexpr) env))
 
 (define (frame-bind frame name val)
     (cons (cons name (car frame))
@@ -56,7 +56,7 @@
 ; lookup a binding in the environment
 (define (lookup-variable env name)
     (if (empty-environment? env)
-      (error "Variable not bound")
+      (error (conc "Variable not bound: "  name))
       (let ((found (lookup-variable-value (car env) name)))
         (if found
           found
@@ -117,7 +117,7 @@
   (cons (cons names values) env))
 
 (define (primitive-procedure? s)
-    (procedure? (lookup-variable s)))
+    (procedure? s))
 
 (define (compound-procedure? p)
     (tagged-list? p 'procedure))
@@ -134,33 +134,34 @@
 
 (define (apply- p args env)
   (cond ((primitive-procedure? p)
-         (apply-primitive-procedure p))
+         (apply-primitive-procedure p args))
         ((compound-procedure? p)
          (apply-compound-procedure p args env))))
 
 (define (eval- sexpr env)
     (cond ((number? sexpr) sexpr)
           ((symbol? sexpr) (lookup-variable env sexpr))
-		  ((sequence? sexpr) (eval-sequence (cdr sexpr)))
+		  ((sequence? sexpr) (eval-sequence (cdr sexpr) env))
           ((definition? sexpr)
            (define-variable! env
                             (definition-name sexpr)
-                            (defininition-value sexpr)))
+                            (definition-value sexpr env)))
           ((lambda? sexpr)
            (make-compound-procedure env
                              (lambda-params sexpr)
                              (lambda-sequence sexpr)))
           ((application? sexpr)
-           (apply- (symbol-resolve (car sexpr))
-                   (list-of-values (cdr sexpr))))
+           (apply- (lookup-variable env (car sexpr))
+                   (list-of-values (cdr sexpr) env)
+                   env))
           ((list? sexpr) (list-of-values sexpr))
           (else (print "Unrecognized form"))))
 
 
-(define (list-of-values sexpr)
+(define (list-of-values sexpr env)
   (cond ((null? sexpr) '())
-        (else (cons (eval- (car sexpr))
-                    (list-of-values (cdr sexpr))))))
+        (else (cons (eval- (car sexpr) env)
+                    (list-of-values (cdr sexpr) env)))))
 
 (define (repl-)
   (display ";lol> ")
