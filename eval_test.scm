@@ -38,7 +38,15 @@
         #f
         (lookup-variable-value '((a b) . (2 3)) 'c))
 
+(test "lookup compound procedure value in a frame"
+      '(procedure '())
+      (lookup-variable-value '((name) (procedure '())) 'name))
+
 (define test-env '(((a b) . (2 3)) ((b c) . (4 5))))
+
+(test "extend environment"
+      '(((name) value) ((name1) value1))
+      (extend-env (make-environment '(name1) '(value1)) '(name) '(value)))
 
 (test "lookup variable in environment" 2 (lookup-variable test-env 'a))
 (test "shadow value" 3 (lookup-variable test-env 'b))
@@ -48,6 +56,7 @@
 ;(test "procedure has a sequence"
 ;      '(do (hello))
 ;      (proc-sequence '(
+
 
 (define empty-env (make-environment '() '()))
 (define (evaluate e)
@@ -60,6 +69,12 @@
       (begin
           (evaluate '(do (def a 3)
                             (+ a 1)))))
+
+(test "define compound procedure"
+      "(#<compound-procedure>)"
+      (let ((env (make-environment '() '())))
+        (eval- '(def my (fn (x) x)) env)
+        (pretty (frame-values (car env)) env)))
 
 (test "define and apply lambda with no params"
       42

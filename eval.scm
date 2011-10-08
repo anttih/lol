@@ -1,4 +1,4 @@
-(use srfi-69)
+(use srfi-69 srfi-1)
 
 (define (definition? sexpr)
   (and (list? sexpr)
@@ -15,6 +15,12 @@
 (define (frame-bind frame name val)
     (cons (cons name (car frame))
           (cons val (cdr frame))))
+
+(define (frame-names frame)
+    (car frame))
+
+(define (frame-values frame)
+    (cdr frame))
 
 (define (define-variable! env name val)
     (set-car! env (frame-bind (car env) name val)))
@@ -73,7 +79,7 @@
   (list 'procedure env params seq))
 
 (define (proc-env p)
-  (car p))
+  (cadr p))
 
 (define (proc-params p)
   (caddr p))
@@ -96,8 +102,11 @@
 (define (make-environment names values)
   (extend-env '() names values))
 
+(define (make-frame names values)
+  (cons names values))
+
 (define (extend-env env names values)
-  (cons (cons names values) env))
+  (cons (make-frame names values) env))
 
 (define (primitive-procedure? s)
     (procedure? s))
@@ -145,6 +154,31 @@
   (cond ((null? sexpr) '())
         (else (cons (eval- (car sexpr) env)
                     (list-of-values (cdr sexpr) env)))))
+
+(define (pretty s env)
+  (define (pretty-values l env)
+    (if (null? l)
+        ""
+        (cons (pretty (car l) env)
+              (pretty-values (cdr l) env))))
+
+  (cond ((number? s) s)
+        ((symbol? s)
+         (pretty (lookup-variable env s) env))
+        ((primitive-procedure? s)
+         "#<primitive procedure>")
+        ((compound-procedure? s)
+         "#<compound-procedure>")
+        ((pair? s)
+         (conc "("
+               (reduce-right (lambda (c a) (conc c " " a))
+                             ""
+                             (pretty-values s env))
+               ")"))
+        (else "<Unrecognized form>")))
+
+(define (pretty-print s env)
+  (print (pretty s env)))
 
 (define (repl-)
   (display ";lol> ")
