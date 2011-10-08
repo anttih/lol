@@ -2,12 +2,12 @@
 (include "pretty")
 
 (define primitives
-  `((+ . ,+)
-    (- . ,-)
-    (* . ,*)
-    (/ . ,/)
-    (car . ,car)
-    (cdr . ,cdr)))
+  `((+     . ,+)
+    (-     . ,-)
+    (*     . ,*)
+    (/     . ,/)
+    (first . ,car)
+    (rest  . ,cdr)))
 
 (define (initial-env)
   (make-environment (map car primitives)
