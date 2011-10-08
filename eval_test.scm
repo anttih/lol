@@ -51,13 +51,6 @@
 (test "lookup variable in environment" 2 (lookup-variable test-env 'a))
 (test "shadow value" 3 (lookup-variable test-env 'b))
 
-; procedures
-;(test "not a primitive procedure" #f (primitive-procedure? 
-;(test "procedure has a sequence"
-;      '(do (hello))
-;      (proc-sequence '(
-
-
 (define empty-env (make-environment '() '()))
 (define (evaluate e)
   (eval- e (make-environment '(+ - / *) (list + - / *))))
