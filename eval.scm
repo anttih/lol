@@ -151,48 +151,5 @@
           ((list? sexpr) (list-of-values sexpr))
           (else (print "Unrecognized form"))))
 
-
 (define (unspecified? v)
   (tagged-list? v 'unspecified))
-
-(define (list-of-values sexpr env)
-  (cond ((null? sexpr) '())
-        (else (cons (eval- (car sexpr) env)
-                    (list-of-values (cdr sexpr) env)))))
-
-(define (pretty s env)
-  (define (pretty-values l env)
-    (if (null? l)
-        ""
-        (cons (pretty (car l) env)
-              (pretty-values (cdr l) env))))
-
-  (cond ((number? s) s)
-        ((symbol? s)
-         (pretty (lookup-variable env s) env))
-        ((unspecified? s) "#<unspecified>")
-        ((primitive-procedure? s)
-         "#<primitive procedure>")
-        ((compound-procedure? s)
-         "#<compound-procedure>")
-        ((pair? s)
-         (conc "("
-               (reduce-right (lambda (c a) (conc c " " a))
-                             ""
-                             (pretty-values s env))
-               ")"))
-        (else "<Unrecognized form>")))
-
-(define (pretty-print s env)
-  (print (pretty s env)))
-
-(define (repl-)
-  (call/cc
-    (lambda (quit)
-      (let ((env (make-environment '(+ - / * quit) (list + - / * quit))))
-        (print "Welcome to LOL! Type (quit) to quit.")
-        (define (loop)
-          (display ";lol> ")
-          (pretty-print (eval- (read) env) env)
-          (loop))
-        (loop)))))
