@@ -63,6 +63,14 @@
           (evaluate '(do (def a 3)
                             (+ a 1)))))
 
+(test "definition-name"
+      'name
+      (definition-name '(def name 1)))
+
+(test "definition-name returns car when param list present"
+      'name
+      (definition-name '(def (name) 1)))
+
 (test "define compound procedure"
       "(#<compound-procedure>)"
       (let ((env (make-environment '() '())))

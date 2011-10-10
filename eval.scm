@@ -6,8 +6,10 @@
        (equal? 'def (car sexpr))
        (symbol? (cadr sexpr))))
        
-(define (definition-name sexpr)
-  (cadr sexpr))
+(define (definition-name e)
+  (let ((spec (cadr e)))
+    (cond ((atom? spec) spec)
+          (else (car spec)))))
 
 (define (definition-value sexpr env)
   (eval- (caddr sexpr) env))
