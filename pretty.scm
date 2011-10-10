@@ -1,10 +1,5 @@
 (include "eval")
 
-(define (list-of-values sexpr env)
-  (cond ((null? sexpr) '())
-        (else (cons (eval- (car sexpr) env)
-                    (list-of-values (cdr sexpr) env)))))
-
 (define (pretty s env)
   (define (pretty-values l env)
     (if (null? l)

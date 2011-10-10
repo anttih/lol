@@ -125,6 +125,11 @@
 (define (apply-primitive-procedure p args)
     (apply p args))
 
+(define (list-of-values sexpr env)
+  (cond ((null? sexpr) '())
+        (else (cons (eval- (car sexpr) env)
+                    (list-of-values (cdr sexpr) env)))))
+
 (define (apply- p args env)
   (cond ((primitive-procedure? p)
          (apply-primitive-procedure p args))
