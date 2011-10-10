@@ -1,18 +1,22 @@
 (use srfi-69 srfi-1)
 
 (define (definition? sexpr)
-  (and (list? sexpr)
-       (= 3 (length sexpr))
-       (equal? 'def (car sexpr))
-       (symbol? (cadr sexpr))))
+  (and (pair? sexpr)
+       (equal? 'def (car sexpr))))
        
 (define (definition-name e)
   (let ((spec (cadr e)))
     (cond ((atom? spec) spec)
           (else (car spec)))))
 
-(define (definition-value sexpr env)
-  (eval- (caddr sexpr) env))
+(define (definition-value e env)
+  (let ((spec (cadr e)))
+    (cond ((atom? spec)
+           (eval- (caddr e) env))
+          (else
+            (make-compound-procedure env
+                                     (cdr spec)
+                                     (cons 'do (cddr e)))))))
 
 (define (frame-bind frame name val)
     (cons (cons name (car frame))
