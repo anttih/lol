@@ -1,6 +1,6 @@
-(use test)
-(load "eval.scm")
-
+(require-extension test)
+(include "eval")
+(include "pretty")
 
 ; lambda
 (test "lambda with empty param list" #t (lambda? '(fn () 1)))
