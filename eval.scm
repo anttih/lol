@@ -115,6 +115,13 @@
 (define (extend-env env names values)
   (cons (make-frame names values) env))
 
+(define (self-evaluating? e)
+  (or (number? e)
+      (string? e)))
+
+(define (quoted? e)
+  (tagged-list? e 'quote))
+
 (define (primitive-procedure? s)
     (procedure? s))
 
@@ -143,8 +150,9 @@
          (apply-compound-procedure p args env))))
 
 (define (eval- sexpr env)
-    (cond ((number? sexpr) sexpr)
+    (cond ((self-evaluating? sexpr) sexpr)
           ((symbol? sexpr) (lookup-variable env sexpr))
+          ((quoted? sexpr) sexpr)
 		  ((sequence? sexpr) (eval-sequence (cdr sexpr) env))
           ((definition? sexpr)
            (define-variable! env
@@ -159,7 +167,6 @@
            (apply- (lookup-variable env (car sexpr))
                    (list-of-values (cdr sexpr) env)
                    env))
-          ((list? sexpr) (list-of-values sexpr))
           (else (print "Unrecognized form"))))
 
 (define (unspecified? v)

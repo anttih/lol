@@ -1,28 +1,27 @@
 (include "eval")
 
-(define (pretty s env)
-  (define (pretty-values l env)
-    (if (null? l)
-        ""
-        (cons (pretty (car l) env)
-              (pretty-values (cdr l) env))))
+(define (pretty s)
+  (define (no-formatting? s)
+    (or (number? s)
+        (symbol? s)))
 
-  (define (join-values l env)
-    (reduce-right (lambda (c a) (conc c " " a))
-                  ""
-                  (pretty-values s env)))
+  (define (implode l sep)
+    (reduce-right (lambda (a v) (conc a sep v)) "" l))
+    
+  (define (join-values l)
+    (implode (map pretty l) " "))
 
-  (cond ((number? s) s)
-        ((symbol? s)
-         (pretty (lookup-variable env s) env))
+  (cond ((no-formatting? s) s)
+        ((string? s) (format "\"~a\"" s))
+        ((quoted? s) (format "(~a)" (join-values (cdr s))))
         ((unspecified? s) "#<unspecified>")
         ((primitive-procedure? s)
          "#<primitive procedure>")
         ((compound-procedure? s)
          "#<compound-procedure>")
         ((pair? s)
-         (conc "(" (join-values s env) ")"))
+         (conc "(" (join-values s) ")"))
         (else "<Unrecognized form>")))
 
-(define (pretty-print s env)
-  (print (pretty s env)))
+(define (pretty-print s)
+  (print (pretty s)))

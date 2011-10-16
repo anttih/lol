@@ -79,12 +79,6 @@
       '(procedure (env) (arg) (do hello world))
       (definition-value '(def (name arg) hello world) '(env)))
 
-(test "define compound procedure"
-      "(#<compound-procedure>)"
-      (let ((env (make-environment '() '())))
-        (eval- '(def my (fn (x) x)) env)
-        (pretty (frame-values (car env)) env)))
-
 (test "define and apply lambda with no params"
       42
       (evaluate '(do
@@ -97,3 +91,14 @@
                    (def square (fn (x) (* x x)))
                    (square 4))))
                     
+;; Pretty printing
+(test "strings are quoted"
+      "\"hello\""
+      (pretty "hello"))
+
+(test "define compound procedure"
+      "(#<compound-procedure>)"
+      (let ((env (make-environment '() '())))
+        (eval- '(def my (fn (x) x)) env)
+        (pretty (frame-values (car env)))))
+
