@@ -92,13 +92,29 @@
                    (square 4))))
                     
 ;; Pretty printing
-(test "strings are quoted"
-      "\"hello\""
-      (pretty "hello"))
-
-(test "define compound procedure"
+(test "strings are quoted" "\"hello\"" (pretty "hello"))
+(test "numbers are just numbers" "42" (pretty 42))
+(test "symbols are not quoted" "symbol" (pretty 'symbol))
+(test "quoted form prints a list of symbols" "(name 1)" (pretty '(quote name 1)))
+(test "compound procedures print a special string"
       "(#<compound-procedure>)"
       (let ((env (make-environment '() '())))
         (eval- '(def my (fn (x) x)) env)
         (pretty (frame-values (car env)))))
 
+;; if
+(test "evaluates consequence when true" 1 (evaluate '(if true 1)))
+(test "evaluates alternate when false" 2 (evaluate '(if false 1 2)))
+
+;; cond
+(test "expands one cond"
+      '(if a b false)
+      (expand-cond '(cond a b) '()))
+
+(test "expands two conditions"
+      '(if a b (if c d false))
+      (expand-cond '(cond a b c d) '()))
+
+(test "expands cond with else"
+      '(if a b other)
+      (expand-cond '(cond a b else other) '()))

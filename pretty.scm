@@ -11,7 +11,7 @@
   (define (join-values l)
     (implode (map pretty l) " "))
 
-  (cond ((no-formatting? s) s)
+  (cond ((no-formatting? s) (format "~a" s))
         ((string? s) (format "\"~a\"" s))
         ((quoted? s) (format "(~a)" (join-values (cdr s))))
         ((unspecified? s) "#<unspecified>")

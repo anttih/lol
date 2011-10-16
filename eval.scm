@@ -119,8 +119,43 @@
   (or (number? e)
       (string? e)))
 
+(define (boolean-value? e)
+  (and (symbol? e)
+	   (or (eq? e 'true)
+		   (eq? e 'false))))
+
+(define (boolean-eval s)
+  (if (eq? s 'true) #t #f))
+
 (define (quoted? e)
   (tagged-list? e 'quote))
+
+(define (cond? s)
+  (tagged-list? s 'cond))
+
+(define (if? e)
+  (tagged-list? e 'if))
+
+(define (eval-if e env)
+  (if (eval- (cadr e) env)
+	(eval- (caddr e) env)
+	(eval- (cadddr e) env)))
+
+(define (expand-cond s)
+  (define (make-if test con alt)
+	(list 'if test con alt))
+
+  (define (else? s)
+	(tagged-list? s 'else))
+
+  (let process-cond ((conds (cdr s)))
+	(if (null? conds)
+		'false 
+		(make-if (car conds)
+				 (cadr conds)
+				 (if (else? (cddr conds))
+				   (cadddr conds)
+				   (process-cond (cddr conds)))))))
 
 (define (primitive-procedure? s)
     (procedure? s))
@@ -151,9 +186,12 @@
 
 (define (eval- sexpr env)
     (cond ((self-evaluating? sexpr) sexpr)
+		  ((boolean-value? sexpr) (boolean-eval sexpr))
           ((symbol? sexpr) (lookup-variable env sexpr))
           ((quoted? sexpr) sexpr)
 		  ((sequence? sexpr) (eval-sequence (cdr sexpr) env))
+		  ((if? sexpr) (eval-if sexpr env))
+		  ((cond? sexpr) (eval-if (expand-cond sexpr) env))
           ((definition? sexpr)
            (define-variable! env
                             (definition-name sexpr)
