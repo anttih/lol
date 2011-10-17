@@ -109,12 +109,12 @@
 ;; cond
 (test "expands one cond"
       '(if a b false)
-      (expand-cond '(cond a b) '()))
+      (expand-cond '(cond a b)))
 
 (test "expands two conditions"
       '(if a b (if c d false))
-      (expand-cond '(cond a b c d) '()))
+      (expand-cond '(cond a b c d)))
 
 (test "expands cond with else"
       '(if a b other)
-      (expand-cond '(cond a b else other) '()))
+      (expand-cond '(cond a b else other)))
