@@ -12,9 +12,19 @@
 
 (define (read-number l)
   (let* ((token (take-while-consume char-numeric? l))
-        (num (car token))
-        (rest (cadr token)))
+         (num (car token))
+         (rest (cadr token)))
     (list (string->number num) rest)))
+
+(define (char-symbol? c)
+  (or (char-alphabetic? c)
+      (char-numeric? c)
+      (not (eq? #f (memq c '(#\+ #\/ #\- #\> #\< #\* #\! #\?))))))
+
+(define (read-symbol l)
+  (let ((token (take-while-consume char-symbol? l)))
+    (list (string->symbol (car token))
+          (cadr token))))
 
 (define (open-paren? c)
   (eq? c #\())
@@ -34,6 +44,10 @@
             ((char-numeric? (car rest))
              (let ((token (read-number rest)))
                (next (append-token done (list 'number (car token)))
+                     (cadr token))))
+            ((char-alphabetic? (car rest))
+             (let ((token (read-symbol rest)))
+               (next (append-token done (list 'symbol (car token)))
                      (cadr token))))
             ((open-paren? (car rest))
              (next (append-token done '(open-paren))
