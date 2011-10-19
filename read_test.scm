@@ -6,11 +6,16 @@
 (test "tokenize two longer numbers" (list '(number 11) '(number 21)) (tokenize "11 21"))
 (test "tokenize a list" (list '(open-paren) '(number 1) '(close-paren)) (tokenize "(1)"))
 (test "tokenize symbol" (list '(symbol name)) (tokenize "name"))
+(test "tokenize symbol +" (list '(symbol +)) (tokenize "+"))
 
 (test "parse list with one number"
-      (list '(1))
+      '(1)
       (parse '((open-paren) (number 1) (close-paren))))
 
 (test "parse list with two numbers"
-      (list '(1 2))
+      '(1 2)
       (parse '((open-paren) (number 1) (number 2) (close-paren))))
+
+(test "parse expression"
+      '(+ 1 2)
+      (parse '((open-paren) (symbol +) (number 1) (number 2) (close-paren))))

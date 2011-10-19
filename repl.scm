@@ -1,5 +1,6 @@
 (include "eval")
 (include "pretty")
+(include "read")
 
 (define primitives
   `((+     . ,+)
@@ -24,6 +25,6 @@
         (print "Welcome to LOL! Type (quit) to quit.")
         (define (loop)
           (display ";lol> ")
-          (pretty-print (eval- (read) env))
+          (pretty-print (eval- (read-) env))
           (loop))
         (loop)))))
