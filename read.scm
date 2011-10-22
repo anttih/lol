@@ -76,7 +76,14 @@
             (else (print "Unrecognized token"))))))
 
 (define (parse tokens)
-  (caar (parse-next '() tokens)))
+  (if (eq? 'open-paren (caar tokens))
+    (let* ((parsed (parse-next '() (cdr tokens)))
+           (res (car parsed))
+           (rest (cadr parsed)))
+      (if (not (null? rest))
+        (print "Unbalanced parentheses")
+        res))
+    (print "Not an s-expression")))
 
 (define (read-)
   (parse (tokenize (read-line (current-input-port)))))
