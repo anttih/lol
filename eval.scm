@@ -178,7 +178,7 @@
         (else (cons (evaluate (car sexpr) env)
                     (list-of-values (cdr sexpr) env)))))
 
-(define (apply- p args env)
+(define (invoke p args env)
   (cond ((primitive-procedure? p)
          (apply-primitive-procedure p args))
         ((compound-procedure? p)
@@ -202,7 +202,7 @@
                              (lambda-params sexpr)
                              (lambda-sequence sexpr)))
           ((application? sexpr)
-           (apply- (if (pair? (car sexpr))
+           (invoke (if (pair? (car sexpr))
                      (evaluate (car sexpr) env)
                      (lookup-variable env (car sexpr)))
                    (list-of-values (cdr sexpr) env)
