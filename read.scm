@@ -18,7 +18,7 @@
 
 (define (char-symbol? c)
   (or (char-alphabetic? c)
-      (not (eq? #f (memq c '(#\+ #\/ #\- #\> #\< #\* #\! #\?))))))
+      (not (eq? #f (memq c '(#\+ #\/ #\- #\= #\> #\< #\* #\! #\?))))))
 
 (define (read-symbol l)
   (let ((token (take-while-consume char-symbol? l)))
