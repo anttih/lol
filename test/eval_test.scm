@@ -52,15 +52,15 @@
 (test "shadow value" 3 (lookup-variable test-env 'b))
 
 (define empty-env (make-environment '() '()))
-(define (evaluate e)
-  (eval- e (make-environment '(+ - / *) (list + - / *))))
+(define (evaluate* e)
+  (evaluate e (make-environment '(+ - / *) (list + - / *))))
 
-(test "simple arithmetic" 2 (evaluate '(+ 1 1)))
-(test "nested arithmetic" 5 (evaluate '(+ (* 2 2) 1)))
+(test "simple arithmetic" 2 (evaluate* '(+ 1 1)))
+(test "nested arithmetic" 5 (evaluate* '(+ (* 2 2) 1)))
 (test "variables"
       4
       (begin
-          (evaluate '(do (def a 3)
+          (evaluate* '(do (def a 3)
                             (+ a 1)))))
 
 (test "definition-name"
@@ -81,19 +81,19 @@
 
 (test "define and apply lambda with no params"
       42
-      (evaluate '(do
+      (evaluate* '(do
                    (def test (fn () 42))
                    (test))))
 
 (test "define lambda"
       16
-      (evaluate '(do
+      (evaluate* '(do
                    (def square (fn (x) (* x x)))
                    (square 4))))
                     
 (test "apply lambda immediately"
       1
-      (evaluate '((fn (x) x) 1)))
+      (evaluate* '((fn (x) x) 1)))
 
 ;; Pretty printing
 (test "strings are quoted" "\"hello\"" (pretty "hello"))
@@ -103,12 +103,12 @@
 (test "compound procedures print a special string"
       "(#<compound-procedure>)"
       (let ((env (make-environment '() '())))
-        (eval- '(def my (fn (x) x)) env)
+        (evaluate '(def my (fn (x) x)) env)
         (pretty (frame-values (car env)))))
 
 ;; if
-(test "evaluates consequence when true" 1 (evaluate '(if true 1)))
-(test "evaluates alternate when false" 2 (evaluate '(if false 1 2)))
+(test "evaluates consequence when true" 1 (evaluate* '(if true 1)))
+(test "evaluates alternate when false" 2 (evaluate* '(if false 1 2)))
 
 ;; cond
 (test "expands one cond"

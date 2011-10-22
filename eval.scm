@@ -12,7 +12,7 @@
 (define (definition-value e env)
   (let ((spec (cadr e)))
     (cond ((atom? spec)
-           (eval- (caddr e) env))
+           (evaluate (caddr e) env))
           (else
             (make-compound-procedure env
                                      (cdr spec)
@@ -100,10 +100,10 @@
 (define (last-exp? seq)
   (null? (cdr seq)))
 
-(define (eval-sequence seq env)
-  (cond ((last-exp? seq) (eval- (car seq) env))
-		(else (eval- (car seq) env)
-			  (eval-sequence (cdr seq) env))))
+(define (evaluate-sequence seq env)
+  (cond ((last-exp? seq) (evaluate (car seq) env))
+		(else (evaluate (car seq) env)
+			  (evaluate-sequence (cdr seq) env))))
 
 ;; environment
 (define (make-environment names values)
@@ -136,10 +136,10 @@
 (define (if? e)
   (tagged-list? e 'if))
 
-(define (eval-if e env)
-  (if (eval- (cadr e) env)
-	(eval- (caddr e) env)
-	(eval- (cadddr e) env)))
+(define (evaluate-if e env)
+  (if (evaluate (cadr e) env)
+	(evaluate (caddr e) env)
+	(evaluate (cadddr e) env)))
 
 (define (expand-cond s)
   (define (make-if test con alt)
@@ -164,7 +164,7 @@
     (tagged-list? p 'procedure))
 
 (define (apply-compound-procedure p args env)
-    (eval- (proc-sequence p)
+    (evaluate (proc-sequence p)
 		 (extend-env
 		   (proc-env p)
 		   (proc-params p)
@@ -175,7 +175,7 @@
 
 (define (list-of-values sexpr env)
   (cond ((null? sexpr) '())
-        (else (cons (eval- (car sexpr) env)
+        (else (cons (evaluate (car sexpr) env)
                     (list-of-values (cdr sexpr) env)))))
 
 (define (apply- p args env)
@@ -184,14 +184,14 @@
         ((compound-procedure? p)
          (apply-compound-procedure p args env))))
 
-(define (eval- sexpr env)
+(define (evaluate sexpr env)
     (cond ((self-evaluating? sexpr) sexpr)
 		  ((boolean-value? sexpr) (boolean-eval sexpr))
           ((symbol? sexpr) (lookup-variable env sexpr))
           ((quoted? sexpr) sexpr)
-		  ((sequence? sexpr) (eval-sequence (cdr sexpr) env))
-		  ((if? sexpr) (eval-if sexpr env))
-		  ((cond? sexpr) (eval-if (expand-cond sexpr) env))
+		  ((sequence? sexpr) (evaluate-sequence (cdr sexpr) env))
+		  ((if? sexpr) (evaluate-if sexpr env))
+		  ((cond? sexpr) (evaluate-if (expand-cond sexpr) env))
           ((definition? sexpr)
            (define-variable! env
                             (definition-name sexpr)
@@ -203,7 +203,7 @@
                              (lambda-sequence sexpr)))
           ((application? sexpr)
            (apply- (if (pair? (car sexpr))
-                     (eval- (car sexpr) env)
+                     (evaluate (car sexpr) env)
                      (lookup-variable env (car sexpr)))
                    (list-of-values (cdr sexpr) env)
                    env))
