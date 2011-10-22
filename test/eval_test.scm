@@ -91,6 +91,10 @@
                    (def square (fn (x) (* x x)))
                    (square 4))))
                     
+(test "apply lambda immediately"
+      1
+      (evaluate '((fn (x) x) 1)))
+
 ;; Pretty printing
 (test "strings are quoted" "\"hello\"" (pretty "hello"))
 (test "numbers are just numbers" "42" (pretty 42))
