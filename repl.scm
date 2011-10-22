@@ -12,7 +12,9 @@
     (=     . ,=)
     (first . ,car)
     (rest  . ,cdr)
-    (eq?   . ,eq?)))
+    (eq?   . ,eq?)
+    (print . ,print)
+    (display . ,display)))
 
 (define (initial-env)
   (make-environment (map car primitives)
