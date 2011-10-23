@@ -173,10 +173,10 @@
 (define (apply-primitive-procedure p args)
     (apply p args))
 
-(define (list-of-values sexpr env)
+(define (evaluate-list sexpr env)
   (cond ((null? sexpr) '())
         (else (cons (evaluate (car sexpr) env)
-                    (list-of-values (cdr sexpr) env)))))
+                    (evaluate-list (cdr sexpr) env)))))
 
 (define (invoke p args env)
   (cond ((primitive-procedure? p)
@@ -205,7 +205,7 @@
            (invoke (if (pair? (car sexpr))
                      (evaluate (car sexpr) env)
                      (lookup-variable env (car sexpr)))
-                   (list-of-values (cdr sexpr) env)
+                   (evaluate-list (cdr sexpr) env)
                    env))
           (else (print "Unrecognized form"))))
 
