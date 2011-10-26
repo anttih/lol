@@ -32,15 +32,14 @@
     (set-car! env (frame-bind (car env) name val)))
 
 (define (lookup-variable-value frame name)
-    (define (search-frame names values)
+    (let search-frame ((names (car frame))
+                       (values (cdr frame)))
         (if (null? names)
           #f
           (if (eq? (car names) name)
             (car values)
             (search-frame (cdr names)
-                          (cdr values)))))
-    (search-frame (car frame)
-                  (cdr frame)))
+                          (cdr values))))))
 
 (define (empty-environment? env)
     (null? env))
