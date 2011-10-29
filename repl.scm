@@ -30,6 +30,10 @@
         (print "Welcome to LOL! Type (quit) to quit.")
         (define (loop)
           (display ";lol> ")
-          (pretty-print (eval- (read-) env))
+          (pretty-print (evaluate (read-) env))
           (loop))
         (loop)))))
+
+(define (evaluate-from-file path)
+  (for-each (lambda (s) (evaluate s initial-env))
+	   (read-file path read-)))
