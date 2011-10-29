@@ -1,0 +1,5 @@
+#!/usr/bin/env csi -ss
+
+(define (main args)
+  (include "repl")
+  (evaluate-from-file (car args)))
