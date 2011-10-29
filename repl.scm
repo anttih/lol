@@ -10,13 +10,16 @@
     (>     . ,>)
     (<     . ,<)
     (=     . ,=)
+    (list  . ,list)
+    (null? . ,null?)
     (first . ,car)
     (rest  . ,cdr)
+    (cons  . ,cons)
     (eq?   . ,eq?)
     (print . ,print)
     (display . ,display)))
 
-(define (initial-env)
+(define initial-env
   (make-environment (map car primitives)
                     (map cdr primitives)))
 
