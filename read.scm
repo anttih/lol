@@ -47,6 +47,8 @@
 (define (read- . port)
   (with-input-from-port (optional port (current-input-port))
     (lambda ()
-      (if (eq? 'open-paren (car (next-token)))
-        (parse-s)
-        (print "Not an s-expression.")))))
+	  (let ((token (car (next-token))))
+		(case token
+		  ((open-paren) (parse-s))
+		  ((eof) #!eof)
+		  (else (error "Not an s-expression")))))))

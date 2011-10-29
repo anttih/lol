@@ -15,3 +15,5 @@
 (test "read proc call" '(+ 1 2) (read-* "(+ 1 2)"))
 (test "read nested s" '((proc)) (read-* "((proc))"))
 
+(test "read input with whitespace" '(proc) (read-* "  (proc)  "))
+(test "read input with newlines" '(proc) (read-* " \n (proc)\n  "))
