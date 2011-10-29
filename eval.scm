@@ -184,10 +184,10 @@
 	(cons `(,(evaluate (car s) env) . ,(evaluate (cadr s) env))
 		  (evaluate-to-alist (cddr s) env))))
 
-(define (evaluate-hash-table-definition s env)
+(define (evaluate-hash-table-expression s env)
   (alist->hash-table (evaluate-to-alist (cdr s) env)))
 
-(define (hash-table-definition? s)
+(define (hash-table-expression? s)
   (tagged-list? s 'hash-table))
 
 (define (evaluate-vector-expression s env)
@@ -210,8 +210,8 @@
 		  ((sequence? sexpr) (evaluate-sequence (cdr sexpr) env))
 		  ((if? sexpr) (evaluate-if sexpr env))
 		  ((cond? sexpr) (evaluate-if (expand-cond sexpr) env))
-		  ((hash-table-definition? sexpr)
-		   (evaluate-hash-table-definition sexpr env))
+		  ((hash-table-expression? sexpr)
+		   (evaluate-hash-table-expression sexpr env))
 		  ((vector-expression? sexpr)
 		   (evaluate-vector-expression sexpr env))
           ((definition? sexpr)
