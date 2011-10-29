@@ -2,4 +2,6 @@
 
 (define (main args)
   (include "repl")
-  (evaluate-from-file (car args)))
+  (if (null? args)
+    (repl-)
+    (evaluate-from-file (car args))))
