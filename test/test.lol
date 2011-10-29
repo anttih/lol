@@ -22,3 +22,7 @@
 
 (print (hash-ref my-hash :key))
 (print (hash-ref my-hash :other))
+
+(def my-vector [1 2 3 4])
+
+(print (vector-ref my-vector 2))
