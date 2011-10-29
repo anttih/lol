@@ -23,3 +23,7 @@
 (test "read hash table expression"
 	  '((hash-table key: val))
 	  (read-* "({:key val})"))
+
+(test "read vector"
+	  '((vector first second))
+	  (read-* "([first second])"))

@@ -27,6 +27,9 @@
 (define (open-curly? c) (eq? c #\{))
 (define (close-curly? c) (eq? c #\}))
 
+(define (open-bracket? c) (eq? c #\[))
+(define (close-bracket? c) (eq? c #\]))
+
 (define (next-token)
     (let ((next (peek-char)))
       (cond ((eof-object? next) (begin (read-char) '(eof)))
@@ -35,6 +38,8 @@
             ((close-paren? next) (begin (read-char) '(close-paren)))
             ((open-curly? next) (begin (read-char) '(open-curly)))
             ((close-curly? next) (begin (read-char) '(close-curly)))
+            ((open-bracket? next) (begin (read-char) '(open-bracket)))
+            ((close-bracket? next) (begin (read-char) '(close-bracket)))
             ((char-colon? next) (begin (read-char) (list 'keyword (read-keyword))))
             ((char-numeric? next) (list 'number (read-number)))
             ((char-symbol? next) (list 'symbol (read-symbol)))
@@ -49,6 +54,7 @@
           ((eof) (error "Unexpected EOF"))
           ((open-paren) (parse-s 'close-paren))
 		  ((open-curly) (cons 'hash-table (parse-s 'close-curly)))
+		  ((open-bracket) (cons 'vector (parse-s 'close-bracket)))
           ((keyword) (cadr token))
           ((symbol) (cadr token))
           ((number) (cadr token))

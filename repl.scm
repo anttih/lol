@@ -16,7 +16,8 @@
     (rest  . ,cdr)
     (cons  . ,cons)
     (eq?   . ,eq?)
-	(hash-ref . ,hash-table-ref)
+	(hash-ref   . ,hash-table-ref)
+	(vector-ref . ,vector-ref)
     (print . ,print)
     (display . ,display)))
 

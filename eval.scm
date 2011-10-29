@@ -190,6 +190,12 @@
 (define (hash-table-definition? s)
   (tagged-list? s 'hash-table))
 
+(define (evaluate-vector-expression s env)
+  (list->vector (evaluate-list (cdr s) env)))
+
+(define (vector-expression? s)
+  (tagged-list? s 'vector))
+
 (define (invoke p args env)
   (cond ((primitive-procedure? p)
          (apply-primitive-procedure p args))
@@ -204,7 +210,10 @@
 		  ((sequence? sexpr) (evaluate-sequence (cdr sexpr) env))
 		  ((if? sexpr) (evaluate-if sexpr env))
 		  ((cond? sexpr) (evaluate-if (expand-cond sexpr) env))
-		  ((hash-table-definition? sexpr) (evaluate-hash-table-definition sexpr env))
+		  ((hash-table-definition? sexpr)
+		   (evaluate-hash-table-definition sexpr env))
+		  ((vector-expression? sexpr)
+		   (evaluate-vector-expression sexpr env))
           ((definition? sexpr)
            (define-variable! env
                             (definition-name sexpr)
