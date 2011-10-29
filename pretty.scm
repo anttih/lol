@@ -21,6 +21,7 @@
          "#<compound-procedure>")
         ((pair? s)
          (conc "(" (join-values s) ")"))
+        ((hash-table? s) "#<hash-table>")
         (else "<Unrecognized form>")))
 
 (define (pretty-print s)

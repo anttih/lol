@@ -16,6 +16,7 @@
     (rest  . ,cdr)
     (cons  . ,cons)
     (eq?   . ,eq?)
+	(hash-ref . ,hash-table-ref)
     (print . ,print)
     (display . ,display)))
 
@@ -26,7 +27,7 @@
 (define (repl-)
   (call/cc
     (lambda (quit)
-      (let ((env (extend-env (initial-env) '(quit) (list quit))))
+      (let ((env (extend-env initial-env '(quit) (list quit))))
         (print "Welcome to LOL! Type (quit) to quit.")
         (define (loop)
           (display ";lol> ")

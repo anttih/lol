@@ -116,7 +116,8 @@
 
 (define (self-evaluating? e)
   (or (number? e)
-      (string? e)))
+      (string? e)
+	  (keyword? e)))
 
 (define (boolean-value? e)
   (and (symbol? e)
@@ -177,6 +178,18 @@
         (else (cons (evaluate (car sexpr) env)
                     (evaluate-list (cdr sexpr) env)))))
 
+(define (evaluate-to-alist s env)
+  (if (null? s)
+	'()
+	(cons `(,(evaluate (car s) env) . ,(evaluate (cadr s) env))
+		  (evaluate-to-alist (cddr s) env))))
+
+(define (evaluate-hash-table-definition s env)
+  (alist->hash-table (evaluate-to-alist (cdr s) env)))
+
+(define (hash-table-definition? s)
+  (tagged-list? s 'hash-table))
+
 (define (invoke p args env)
   (cond ((primitive-procedure? p)
          (apply-primitive-procedure p args))
@@ -191,6 +204,7 @@
 		  ((sequence? sexpr) (evaluate-sequence (cdr sexpr) env))
 		  ((if? sexpr) (evaluate-if sexpr env))
 		  ((cond? sexpr) (evaluate-if (expand-cond sexpr) env))
+		  ((hash-table-definition? sexpr) (evaluate-hash-table-definition sexpr env))
           ((definition? sexpr)
            (define-variable! env
                             (definition-name sexpr)

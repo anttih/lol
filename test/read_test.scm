@@ -11,9 +11,15 @@
 (test "read symbol" '(hello) (read-* "(hello)"))
 (test "read symbol with special chars" '(a+-*/=<>!?) (read-* "(a+-*/=<>!?)"))
 
+(test "read keyword" '(hello:) (read-* "(:hello)"))
+
 (test "read s with two numbers" '(1 2) (read-* "(1 2)"))
 (test "read proc call" '(+ 1 2) (read-* "(+ 1 2)"))
 (test "read nested s" '((proc)) (read-* "((proc))"))
 
 (test "read input with whitespace" '(proc) (read-* "  (proc)  "))
 (test "read input with newlines" '(proc) (read-* " \n (proc)\n  "))
+
+(test "read hash table expression"
+	  '((hash-table key: val))
+	  (read-* "({:key val})"))

@@ -12,14 +12,20 @@
   (or (char-alphabetic? c)
       (not (eq? #f (memq c '(#\+ #\/ #\- #\= #\> #\< #\* #\! #\?))))))
 
+(define (char-colon? c)
+  (eq? c #\:))
+
 (define (read-symbol)
   (string->symbol (read-while char-symbol?)))
 
-(define (open-paren? c)
-  (eq? c #\())
+(define (read-keyword)
+  (string->keyword (read-while char-symbol?)))
 
-(define (close-paren? c)
-  (eq? c #\)))
+(define (open-paren? c) (eq? c #\())
+(define (close-paren? c) (eq? c #\)))
+
+(define (open-curly? c) (eq? c #\{))
+(define (close-curly? c) (eq? c #\}))
 
 (define (next-token)
     (let ((next (peek-char)))
@@ -27,28 +33,33 @@
             ((char-whitespace? next) (begin (read-char) (next-token)))
             ((open-paren? next) (begin (read-char) '(open-paren)))
             ((close-paren? next) (begin (read-char) '(close-paren)))
+            ((open-curly? next) (begin (read-char) '(open-curly)))
+            ((close-curly? next) (begin (read-char) '(close-curly)))
+            ((char-colon? next) (begin (read-char) (list 'keyword (read-keyword))))
             ((char-numeric? next) (list 'number (read-number)))
             ((char-symbol? next) (list 'symbol (read-symbol)))
             (else (print "Malformed expression")))))
 
-(define (parse-s)
+(define (parse-s close)
   (let ((token (next-token)))
-    (if (eq? (car token) 'close-paren)
+    (if (eq? (car token) close)
       '()
       (cons
         (case (car token)
           ((eof) (error "Unexpected EOF"))
-          ((open-paren) (parse-s))
+          ((open-paren) (parse-s 'close-paren))
+		  ((open-curly) (cons 'hash-table (parse-s 'close-curly)))
+          ((keyword) (cadr token))
           ((symbol) (cadr token))
           ((number) (cadr token))
           (else (print "Unrecognized token")))
-        (parse-s)))))
+        (parse-s close)))))
 
 (define (read- . port)
   (with-input-from-port (optional port (current-input-port))
     (lambda ()
 	  (let ((token (car (next-token))))
 		(case token
-		  ((open-paren) (parse-s))
+		  ((open-paren) (parse-s 'close-paren))
 		  ((eof) #!eof)
 		  (else (error "Not an s-expression")))))))
