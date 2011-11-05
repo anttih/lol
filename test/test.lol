@@ -18,7 +18,7 @@
 
 (print (map (compose square fact) (list 3 4 5)))
 
-(def my-hash {:key 42 :other 12})
+(def my-hash {:key "first value" :other "second value"})
 
 (print (hash-ref my-hash :key))
 (print (hash-ref my-hash :other))
