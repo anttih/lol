@@ -27,3 +27,7 @@
 (test "read vector"
 	  '((vector first second))
 	  (read-* "([first second])"))
+
+(test "read string"
+      '("hello")
+      (read-* "(\"hello\")"))

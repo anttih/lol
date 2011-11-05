@@ -8,6 +8,13 @@
 (define (read-number)
   (string->number (read-while char-numeric?)))
 
+(define (char-doublequote? c) (eq? c #\"))
+
+(define (read-string)
+  (let ((str (read-while (compose not char-doublequote?))))
+    (read-char)
+    str))
+
 (define (char-symbol? c)
   (or (char-alphabetic? c)
       (not (eq? #f (memq c '(#\+ #\/ #\- #\= #\> #\< #\* #\! #\?))))))
@@ -42,6 +49,7 @@
             ((close-bracket? next) (begin (read-char) '(close-bracket)))
             ((char-colon? next) (begin (read-char) (list 'keyword (read-keyword))))
             ((char-numeric? next) (list 'number (read-number)))
+            ((char-doublequote? next) (begin (read-char) (list 'string (read-string))))
             ((char-symbol? next) (list 'symbol (read-symbol)))
             (else (print "Malformed expression")))))
 
@@ -58,6 +66,7 @@
           ((keyword) (cadr token))
           ((symbol) (cadr token))
           ((number) (cadr token))
+          ((string) (cadr token))
           (else (print "Unrecognized token")))
         (parse-s close)))))
 
