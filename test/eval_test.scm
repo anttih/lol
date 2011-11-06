@@ -122,3 +122,9 @@
 (test "expands cond with else"
       '(if a b other)
       (expand-cond '(cond a b else other)))
+
+;; let
+(test "expands let to an anon function call"
+      '((fn (x) (+ x 1)) 2)
+      (expand-let '(let (x 2) (+ x 1))))
+

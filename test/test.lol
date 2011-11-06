@@ -26,3 +26,11 @@
 (def my-vector [1 2 3 4])
 
 (print (vector-ref my-vector 2))
+
+(def name "success")
+
+(let (name "lulz"
+      other (square 2))
+  (print "name is " name ", and the square of 2 is " other))
+
+(print name)

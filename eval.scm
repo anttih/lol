@@ -157,6 +157,32 @@
 				   (cadddr conds)
 				   (process-cond (cddr conds)))))))
 
+(define (let? s)
+  (tagged-list? s 'let))
+
+(define (expand-let s)
+
+  (define (pairs s)
+    (if (null? s)
+      '()
+      (cons `(,(car s) . ,(cadr s))
+            (pairs (cddr s)))))
+
+  (define (let-names spec)
+    (if (not (= (modulo (length spec) 2) 0))
+      (error "Unmatched number of let bindings")
+      (map car (pairs spec))))
+
+  (define (let-values spec)
+    (map cdr (pairs spec)))
+
+  (cons
+    (list 'fn
+          (let-names (cadr s))
+          (caddr s))
+    (let-values (cadr s))))
+
+
 (define (primitive-procedure? s)
     (procedure? s))
 
@@ -210,6 +236,7 @@
 		  ((sequence? sexpr) (evaluate-sequence (cdr sexpr) env))
 		  ((if? sexpr) (evaluate-if sexpr env))
 		  ((cond? sexpr) (evaluate-if (expand-cond sexpr) env))
+          ((let? sexpr) (evaluate (expand-let sexpr) env))
 		  ((hash-table-expression? sexpr)
 		   (evaluate-hash-table-expression sexpr env))
 		  ((vector-expression? sexpr)
