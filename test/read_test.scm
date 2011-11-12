@@ -28,7 +28,7 @@
 	  (read-* "{:key val}"))
 
 (test "read vector"
-	  '(vector first second)
+	  (vector 'first 'second)
 	  (read-* "[first second]"))
 
 (test "read string"

@@ -88,7 +88,7 @@
           ((atomic? tag) (cadr token))
           ((eq? tag 'open-paren) (read-s 'close-paren))
           ((eq? tag 'open-curly) (alist->hash-table (read-alist 'close-curly)))
-          ((eq? tag 'open-bracket) (cons 'vector (read-s 'close-bracket)))
+          ((eq? tag 'open-bracket) (apply vector (read-s 'close-bracket)))
           ((close-s? tag) tag)
           (else (print "Unrecognized token")))))
 

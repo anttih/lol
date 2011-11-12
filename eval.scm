@@ -212,8 +212,8 @@
     (hash-table-map s
         (lambda (k v) `(,(evaluate k env) . ,(evaluate v env))))))
 
-(define (evaluate-vector-expression s env)
-  (list->vector (evaluate-list (cdr s) env)))
+(define (evaluate-vector s env)
+  (apply vector (map (lambda (v) (evaluate v env)) (vector->list s))))
 
 (define (vector-expression? s)
   (tagged-list? s 'vector))
@@ -235,8 +235,8 @@
           ((let? sexpr) (evaluate (expand-let sexpr) env))
 		  ((hash-table? sexpr)
 		   (evaluate-hash-table sexpr env))
-		  ((vector-expression? sexpr)
-		   (evaluate-vector-expression sexpr env))
+		  ((vector? sexpr)
+		   (evaluate-vector sexpr env))
           ((definition? sexpr)
            (define-variable! env
                             (definition-name sexpr)
