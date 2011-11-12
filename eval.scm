@@ -44,9 +44,6 @@
 (define (empty-environment? env)
     (null? env))
 
-(define (error msg)
-    (print "Error: " msg))
-
 ; lookup a binding in the environment
 (define (lookup-variable env name)
     (if (empty-environment? env)
@@ -210,11 +207,10 @@
 	(cons `(,(evaluate (car s) env) . ,(evaluate (cadr s) env))
 		  (evaluate-to-alist (cddr s) env))))
 
-(define (evaluate-hash-table-expression s env)
-  (alist->hash-table (evaluate-to-alist (cdr s) env)))
-
-(define (hash-table-expression? s)
-  (tagged-list? s 'hash-table))
+(define (evaluate-hash-table s env)
+  (alist->hash-table
+    (hash-table-map s
+        (lambda (k v) `(,(evaluate k env) . ,(evaluate v env))))))
 
 (define (evaluate-vector-expression s env)
   (list->vector (evaluate-list (cdr s) env)))
@@ -237,8 +233,8 @@
 		  ((if? sexpr) (evaluate-if sexpr env))
 		  ((cond? sexpr) (evaluate-if (expand-cond sexpr) env))
           ((let? sexpr) (evaluate (expand-let sexpr) env))
-		  ((hash-table-expression? sexpr)
-		   (evaluate-hash-table-expression sexpr env))
+		  ((hash-table? sexpr)
+		   (evaluate-hash-table sexpr env))
 		  ((vector-expression? sexpr)
 		   (evaluate-vector-expression sexpr env))
           ((definition? sexpr)

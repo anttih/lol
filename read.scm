@@ -1,3 +1,4 @@
+(use srfi-69)
 
 (define (read-while pred)
   (let more ((a ""))
@@ -62,6 +63,13 @@
           (else (cons token
                       (read-s close))))))
 
+(define (read-alist close)
+  (let next ((s (read-s close)))
+	(if (null? s)
+	  '()
+	  (cons `(,(car s) . ,(cadr s))
+			(next (cddr s))))))
+
 (define (atomic? s)
   (or (eq? s 'keyword)
       (eq? s 'symbol)
@@ -79,7 +87,7 @@
     (cond ((eq? tag 'eof) #!eof)
           ((atomic? tag) (cadr token))
           ((eq? tag 'open-paren) (read-s 'close-paren))
-          ((eq? tag 'open-curly) (cons 'hash-table (read-s 'close-curly)))
+          ((eq? tag 'open-curly) (alist->hash-table (read-alist 'close-curly)))
           ((eq? tag 'open-bracket) (cons 'vector (read-s 'close-bracket)))
           ((close-s? tag) tag)
           (else (print "Unrecognized token")))))

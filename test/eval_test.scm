@@ -128,3 +128,7 @@
       '((fn (x) (+ x 1)) 2)
       (expand-let '(let (x 2) (+ x 1))))
 
+(test "hash table"
+      1
+      (hash-table-ref (evaluate* (alist->hash-table '((key: . 1)))) key:))
+

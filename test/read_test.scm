@@ -24,7 +24,7 @@
 (test "read input with newlines" '(proc) (read-* " \n (proc)\n  "))
 
 (test "read hash table expression"
-	  '(hash-table key: val)
+	  (alist->hash-table '((key: . val)))
 	  (read-* "{:key val}"))
 
 (test "read vector"
