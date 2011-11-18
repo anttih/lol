@@ -9,6 +9,7 @@ all : .o
 
 clean :
 	rm *.o
+	rm bin/lol
 
 test:
 	@csi -qb test/*_test.scm
