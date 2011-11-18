@@ -1,6 +1,6 @@
-(include "eval")
-(include "pretty")
-(include "read")
+(declare
+  (unit repl)
+  (uses evaler pretty reader srfi-69))
 
 (define primitives
   `((+     . ,+)

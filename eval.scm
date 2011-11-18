@@ -1,4 +1,6 @@
-(use srfi-69 srfi-1)
+(declare
+  (unit evaler)
+  (uses srfi-1 srfi-69))
 
 (define (definition? sexpr)
   (and (pair? sexpr)

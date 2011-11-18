@@ -1,4 +1,5 @@
 (require-extension test)
+(use srfi-1 srfi-69)
 (include "eval")
 (include "pretty")
 

@@ -1,4 +1,6 @@
-(use srfi-69)
+(declare
+  (unit reader)
+  (uses ports data-structures srfi-69))
 
 (define (read-while pred)
   (let more ((a ""))

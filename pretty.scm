@@ -1,4 +1,6 @@
-(include "eval")
+(declare
+  (unit pretty)
+  (uses evaler))
 
 (define (pretty s)
   (define (no-formatting? s)
