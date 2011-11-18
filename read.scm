@@ -15,7 +15,7 @@
 
 (define (char-doublequote? c) (eq? c #\"))
 
-(define (read-string)
+(define (read-str)
   (let ((str (read-while (compose not char-doublequote?))))
     (read-char)
     str))
@@ -54,7 +54,7 @@
             ((close-bracket? next) (begin (read-char) '(close-bracket)))
             ((char-colon? next) (begin (read-char) (list 'keyword (read-keyword))))
             ((char-numeric? next) (list 'number (read-number)))
-            ((char-doublequote? next) (begin (read-char) (list 'string (read-string))))
+            ((char-doublequote? next) (begin (read-char) (list 'string (read-str))))
             ((char-symbol? next) (list 'symbol (read-symbol)))
             (else (print "Malformed expression")))))
 
