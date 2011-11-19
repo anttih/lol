@@ -1,6 +1,6 @@
 (declare
   (unit repl)
-  (uses evaler pretty reader srfi-69))
+  (uses evaler pretty reader extras srfi-69))
 
 (define primitives
   `((+     . ,+)
@@ -19,7 +19,8 @@
 	(hash-ref   . ,hash-table-ref)
 	(vector-ref . ,vector-ref)
     (print . ,print)
-    (display . ,display)))
+    (display . ,display)
+    (current-milliseconds . ,current-milliseconds)))
 
 (define initial-env
   (make-environment (map car primitives)

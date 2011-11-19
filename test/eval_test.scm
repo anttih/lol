@@ -125,9 +125,10 @@
       (expand-cond '(cond a b else other)))
 
 ;; let
-(test "expands let to an anon function call"
-      '((fn (x) (+ x 1)) 2)
-      (expand-let '(let (x 2) (+ x 1))))
+(test "let with one param" 1 (evaluate* '(let (x 1) x)))
+(test "let with two params" 2 (evaluate* '(let (x 1 y 1) (+ x y))))
+(test "let with longer sequence" 3 (evaluate* '(let () (+ 1 1) (+ 1 2))))
+(test "let with bind expression" 2 (evaluate* '(let (x (+ 1 1)) x)))
 
 (test "vector with one value" 2 (vector-ref (evaluate* (vector 2)) 0))
 (test "vector with two values" 2 (vector-ref (evaluate* (vector 1 2)) 1))

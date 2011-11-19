@@ -1,6 +1,6 @@
 #!/usr/bin/env csi -ss
 
-(use srfi-69)
+(use extras srfi-69)
 
 (define (main args)
   (include "eval")

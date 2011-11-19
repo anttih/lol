@@ -159,7 +159,7 @@
 (define (let? s)
   (tagged-list? s 'let))
 
-(define (expand-let s)
+(define (evaluate-let s env)
 
   (define (pairs s)
     (if (null? s)
@@ -173,12 +173,13 @@
       (map car (pairs spec))))
 
   (define (let-values spec)
-    (map cdr (pairs spec)))
+    (map (compose (lambda (s) (evaluate s env)) cdr)
+		 (pairs spec)))
 
-  (cons
-    (list 'fn
-          (let-names (cadr s))
-          (caddr s))
+  (apply-compound-procedure
+	(make-compound-procedure env
+							 (let-names (cadr s))
+							 (cons 'do (cddr s)))
     (let-values (cadr s))))
 
 
@@ -188,7 +189,7 @@
 (define (compound-procedure? p)
     (tagged-list? p 'procedure))
 
-(define (apply-compound-procedure p args env)
+(define (apply-compound-procedure p args)
     (evaluate (proc-sequence p)
 		 (extend-env
 		   (proc-env p)
@@ -224,7 +225,7 @@
   (cond ((primitive-procedure? p)
          (apply-primitive-procedure p args))
         ((compound-procedure? p)
-         (apply-compound-procedure p args env))))
+         (apply-compound-procedure p args))))
 
 (define (evaluate sexpr env)
     (cond ((self-evaluating? sexpr) sexpr)
@@ -234,7 +235,7 @@
 		  ((sequence? sexpr) (evaluate-sequence (cdr sexpr) env))
 		  ((if? sexpr) (evaluate-if sexpr env))
 		  ((cond? sexpr) (evaluate-if (expand-cond sexpr) env))
-          ((let? sexpr) (evaluate (expand-let sexpr) env))
+          ((let? sexpr) (evaluate-let sexpr env))
 		  ((hash-table? sexpr)
 		   (evaluate-hash-table sexpr env))
 		  ((vector? sexpr)
