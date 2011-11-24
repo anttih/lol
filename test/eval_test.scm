@@ -72,11 +72,11 @@
       'name
       (definition-name '(def (name) 1)))
 
-(test "definition-value returns proc with no args when spec is list with just car"
+(test "definition-value with no args"
       '(procedure (env) () (do something awesome))
       (definition-value '(def (name) something awesome) '(env)))
 
-(test "definition-value returns proc with params when spec is list with cdr"
+(test "definition-value with args"
       '(procedure (env) (arg) (do hello world))
       (definition-value '(def (name arg) hello world) '(env)))
 
