@@ -52,7 +52,6 @@
 (test "lookup variable in environment" 2 (lookup-variable test-env 'a))
 (test "shadow value" 3 (lookup-variable test-env 'b))
 
-(define empty-env (make-environment '() '()))
 (define (evaluate* e)
   (evaluate e (make-environment '(+ - / *) (list + - / *))))
 
@@ -72,14 +71,6 @@
       'name
       (definition-name '(def (name) 1)))
 
-(test "definition-value with no args"
-      '(procedure (env) () (do something awesome))
-      (definition-value '(def (name) something awesome) '(env)))
-
-(test "definition-value with args"
-      '(procedure (env) (arg) (do hello world))
-      (definition-value '(def (name arg) hello world) '(env)))
-
 (test "define and apply lambda with no params"
       42
       (evaluate* '(do
@@ -92,20 +83,20 @@
                    (def square (fn (x) (* x x)))
                    (square 4))))
                     
-(test "apply lambda immediately"
+(test "apply lambda at function position"
       1
       (evaluate* '((fn (x) x) 1)))
 
 ;; Pretty printing
-(test "strings are quoted" "\"hello\"" (pretty "hello"))
-(test "numbers are just numbers" "42" (pretty 42))
-(test "symbols are not quoted" "symbol" (pretty 'symbol))
-(test "quoted form prints a list of symbols" "(name 1)" (pretty '(quote name 1)))
+(test "strings are quoted" "\"hello\"" (pretty "hello" '()))
+(test "numbers are just numbers" "42" (pretty 42 '()))
+(test "symbols are not quoted" "symbol" (pretty 'symbol '()))
+(test "quoted form prints a list of symbols" "(name 1)" (pretty '(quote name 1) '()))
 (test "compound procedures print a special string"
-      "(#<compound-procedure>)"
+      "#<compound-procedure>"
       (let ((env (make-environment '() '())))
         (evaluate '(def my (fn (x) x)) env)
-        (pretty (frame-values (car env)))))
+        (pretty (frame-values (car env)) env)))
 
 ;; if
 (test "evaluates consequence when true" 1 (evaluate* '(if true 1)))

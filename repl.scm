@@ -24,7 +24,7 @@
 
 (define initial-env
   (make-environment (map car primitives)
-                    (map cdr primitives)))
+					(map cdr primitives)))
 
 (define (repl-)
   (call/cc

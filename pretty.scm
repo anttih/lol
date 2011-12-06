@@ -2,7 +2,7 @@
   (unit pretty)
   (uses evaler))
 
-(define (pretty s)
+(define (pretty s env)
   (define (no-formatting? s)
     (or (number? s)
         (symbol? s)))
@@ -11,7 +11,7 @@
     (reduce-right (lambda (a v) (conc a sep v)) "" l))
     
   (define (join-values l)
-    (implode (map pretty l) " "))
+    (implode (map (lambda (v) (pretty v env)) l) " "))
 
   (cond ((no-formatting? s) (format "~a" s))
         ((string? s) (format "\"~a\"" s))
@@ -19,7 +19,7 @@
         ((unspecified? s) "#<unspecified>")
         ((primitive-procedure? s)
          "#<primitive procedure>")
-        ((compound-procedure? s)
+        ((not (primitive-procedure? s))
          "#<compound-procedure>")
         ((pair? s)
          (conc "(" (join-values s) ")"))
@@ -27,5 +27,5 @@
         ((vector? s) "#<vector>")
         (else "<Unrecognized form>")))
 
-(define (pretty-print s)
-  (print (pretty s)))
+(define (pretty-print s env)
+  (print (pretty s env)))

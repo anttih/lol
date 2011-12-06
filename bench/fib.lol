@@ -10,6 +10,6 @@
     (f)
     (- (current-milliseconds) start)))
 
-(display "40th fibonacci: ")
+(display "30th fibonacci: ")
 (print (timed (fn () (fib 30))) "ms")
 
