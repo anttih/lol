@@ -1,10 +1,12 @@
 
 .PHONY: test
 
-all : .o
+objects = eval.o read.o pretty.o repl.o lol.o
+
+all : $(objects)
 	csc *.o -o bin/lol
 
-.o :
+$(objects) :
 	csc -c *.scm
 
 clean :
