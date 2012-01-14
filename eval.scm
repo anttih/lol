@@ -172,19 +172,19 @@
   (let ((h (map-hash-table (lambda (v) (analyze v)) s)))
     (lambda (env) (map-hash-table (lambda (v) (v env)) h))))
 
-(define (analyze-self-evaluating s)
-  (lambda (env) s))
+(define (analyze-self-evaluating v)
+  (lambda (env c) (c v)))
 
 (define (analyze-boolean s)
   (let ((bool (boolean-eval s)))
-      (lambda (env) bool)))
+      (lambda (env c) (c bool))))
 
 (define (analyze-variable s)
-  (lambda (env) (lookup-variable env s)))
+  (lambda (env c) (c (lookup-variable env s))))
 
 (define (analyze-quoted s)
   (let ((quoted (cdr s)))
-    (lambda (env) quoted)))
+    (lambda (env c) (c quoted))))
 
 (define (analyze-if s)
   (let ((test (analyze (cadr s)))
@@ -192,22 +192,33 @@
         (alt (if (> (length s) 3)
                (analyze (cadddr s))
                (analyze-boolean 'false))))
-    (lambda (env) (if (test env) (then env) (alt env)))))
+    (lambda (env c)
+      (test env (make-if-cont c then alt env)))))
+
+      ;(if (test env) (then env) (alt env)))))
+(define (make-if-cont c then alt r)
+  (lambda (v)
+    (apply (if (true? v) then alt)
+           (list r c))))
+
+(define (true? v)
+  (not (eq? v #f)))
 
 (define (analyze-seq s)
-  (define (sequentally s1 s2)
-    (lambda (env) (s1 env) (s2 env)))
 
-  (define (loop first-proc rest-procs)
-    (if (null? rest-procs)
-      first-proc
-      (loop (sequentally first-proc (car rest-procs))
-            (cdr rest-procs))))
+  (define (eval-seq procs env c)
+      (if (pair? procs)
+        (if (pair? (cdr procs))
+          ((car procs) env (make-do-cont procs env c))
+          ((car procs) env c))
+        (c '())))
+
+  (define (make-do-cont s env c)
+    (lambda (v) (eval-seq (cdr s) env c)))
 
   (let ((procs (map analyze s)))
-    (if (null? procs)
-      (error "Empty sequece")
-      (loop (car procs) (cdr procs)))) )
+      (lambda (env c) (eval-seq procs env c))))
+
 
 (define (analyze-anon names seq)
   (let ((s (analyze-seq seq)))
@@ -220,7 +231,7 @@
   (define (pairs s)
     (if (null? s)
       '()
-      (cons `(,(car s) . ,(cadr s))
+      (cons (cons (car s) (cadr s))
             (pairs (cddr s)))))
 
   (define (let-names spec)
@@ -279,7 +290,8 @@
         (else (error "Unrecognized form"))))
 
 (define (evaluate sexpr env)
-  ((analyze sexpr) env))
+  (call/cc (lambda (return)
+             ((analyze sexpr) env return))))
 
 (define (unspecified? v)
   (tagged-list? v 'unspecified))
