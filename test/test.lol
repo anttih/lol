@@ -34,3 +34,8 @@
   (print "name is " name ", and the square of 2 is " other))
 
 (print name)
+
+(let (cc (call/cc (fn (c) c)))
+  (if (eq? cc 1)
+    (print "Non-local return")
+    (cc 1)))

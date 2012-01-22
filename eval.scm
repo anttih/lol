@@ -143,34 +143,28 @@
 
 (define (primitive-procedure? p) (procedure? p))
 
-(define (analyze-list parts)
-  (cond ((null? parts) '())
-        (else (cons (analyze (car parts))
-                    (analyze-list (cdr parts))))))
-
-(define (vector-map f v)
-  (list->vector
-    (let loop ((l (vector->list v)))
-      (if (null? l)
-        '()
-        (cons (f (car l))
-              (loop (cdr l)))))))
-
 (define (analyze-vector s)
-  (let ((v (vector-map (lambda (val) (analyze val)) s)))
-    (lambda (env) (vector-map (lambda (v) (v env)) v))))
+  (define (make-vector-cont c)
+    (lambda (xs) (c (list->vector xs))))
 
-(define (map-hash-table f t)
-  (alist->hash-table
-    (let loop ((h (hash-table->alist t)))
-      (if (null? h)
-        '()
-        (cons `(,(caar h) . ,(f (cdar h)))
-              (loop (cdr h)))))))
+  (let ((xs (map (lambda (val) (analyze val)) (vector->list s))))
+    (lambda (env c)
+      (eval-list env (make-vector-cont c) xs))))
 
 (define (analyze-hash-table s)
-  (let ((h (map-hash-table (lambda (v) (analyze v)) s)))
-    (lambda (env) (map-hash-table (lambda (v) (v env)) h))))
+  (define (interleave keys vals)
+    (if (null? keys)
+      '()
+      (cons
+        (cons (car keys) (car vals))
+        (interleave (cdr keys) (cdr vals)))))
+     
+  (define (make-hash-cont c keys)
+    (lambda (vals) (c (alist->hash-table (interleave keys vals)))))
+
+  (let ((vals (map analyze (hash-table-values s))))
+    (lambda (env c)
+      (eval-list env (make-hash-cont c (hash-table-keys s)) vals))))
 
 (define (analyze-self-evaluating v)
   (lambda (env c) (c v)))
@@ -219,15 +213,30 @@
   (let ((procs (map analyze s)))
       (lambda (env c) (eval-seq procs env c))))
 
+;; eval a list of values and return them to the continuation
+(define (eval-list env c args)
+  (define (make-list-cont c env args)
+    (lambda (evaled) (eval-list env (make-gather-cont c evaled) (cdr args))))
+
+  (define (make-gather-cont c evaled)
+    (lambda (v) (c (cons evaled v))))
+
+  (if (pair? args)
+    ((car args) env (make-list-cont c env args))
+    (c '())))
+
+(define (analyze-args s)
+  (let ((args (map analyze s)))
+    (lambda (env c) (eval-list env c args))))
 
 (define (analyze-anon names seq)
   (let ((s (analyze-seq seq)))
-    (lambda (env) (make-compound-procedure names s env))))
+    (lambda (env c) (c (make-compound-procedure names s env)))))
 
 (define (analyze-lambda s)
   (analyze-anon (cadr s) (cddr s)))
 
-(define (analyze-let s)
+(define (expand-let s)
   (define (pairs s)
     (if (null? s)
       '()
@@ -239,39 +248,67 @@
       (error "Unmatched number of let bindings")
       (map car (pairs spec))))
 
-  (define (let-values spec)
-    (map (compose (lambda (s) (analyze s)) cdr)
-         (pairs spec)))
+  (define (let-vals spec)
+    (map cdr (pairs spec)))
 
-  (let ((l (analyze-anon (let-names (cadr s)) (cddr s)))
-        (args (let-values (cadr s))))
-    (lambda (env) (invoke (l env) (map (lambda (v) (v env)) args) env))))
+  (cons
+    (cons 'fn
+          (cons (let-names (cadr s))
+                (cddr s)))
+    (let-vals (cadr s))))
+
+(define (analyze-let s)
+  (analyze-application (expand-let s)))
+
+(define (make-def-cont c name env)
+  (lambda (v)
+     (define-variable! env name v)
+     (c 'unspecified)))
 
 (define (analyze-definition s)
   (let ((name (definition-name s))
         (value (analyze-definition-value s)))
-    (lambda (env)
-      (define-variable! env
-                        name
-                        (value env)))))
+    (lambda (env c)
+      (value env (make-def-cont c name env)))))
+
+(define (make-apply-cont c args env)
+  (lambda (p) (args env (make-invoke-cont c p))))
+
+(define (make-invoke-cont c p)
+  (lambda (args) (invoke p args c)))
 
 (define (analyze-application s)
   (let ((p (car s))
-        (args (analyze-list (cdr s))))
+        (args (analyze-args (cdr s))))
     (if (pair? p)
-      (let ((l (analyze-lambda p)))
-        (lambda (env) (invoke (l env) (map (lambda (a) (a env)) args) env)))
-      (lambda (env) (invoke (lookup-variable env p) (map (lambda (a) (a env)) args) env)))))
+      ;; ((fn () ...) ...)
+      (let ((f (analyze-lambda p)))
+        (lambda (env c)
+          (f env (make-apply-cont c args env))))
+      ;; (proc ...)
+      (lambda (env c)
+        (args env (make-invoke-cont c (lookup-variable env p)))))))
 
 (define (compound-procedure? p)
   (tagged-list? p 'procedure))
 
-(define (invoke p args env)
+(define (invoke p args c)
   (cond ((compound-procedure? p)
-         ((caddr p) (extend-env (cadddr p) (cadr p) args)))
+         ((caddr p) (extend-env (cadddr p) (cadr p) args) c))
         ((primitive-procedure? p)
-         (apply p args))
+         (c (apply p args)))
         (else (error "Cannot invoke"))))
+
+(define (call/cc? s)
+  (tagged-list? s 'call/cc))
+
+(define (analyze-call/cc s)
+  (define (c-args cc)
+    (lambda (env c) (c (list cc))))
+
+  (let ((f (analyze-lambda (cadr s))))
+    (lambda (env c)
+      (f env (make-apply-cont c (c-args c) env)))))
 
 (define (analyze s)
   (cond ((self-evaluating? s) (analyze-self-evaluating s))
@@ -286,6 +323,7 @@
         ((lambda? s) (analyze-lambda s))
         ((sequence? s) (analyze-seq (cdr s)))
         ((definition? s) (analyze-definition s))
+        ((call/cc? s) (analyze-call/cc s))
         ((application? s) (analyze-application s))
         (else (error "Unrecognized form"))))
 

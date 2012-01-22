@@ -57,11 +57,13 @@
 
 (test "simple arithmetic" 2 (evaluate* '(+ 1 1)))
 (test "nested arithmetic" 5 (evaluate* '(+ (* 2 2) 1)))
-(test "variables"
-      4
-      (begin
-          (evaluate* '(do (def a 3)
-                            (+ a 1)))))
+
+; sequence
+(test "do block with empty body returns nil" '() (evaluate* '(do)))
+(test "do block with one expression returns" 2 (evaluate* '(do 2)))
+(test "do block with pair expression" 2 (evaluate* '(do (+ 1 1))))
+
+(test "variables" 4 (evaluate* '(do (def a 3) (+ a 1))))
 
 (test "definition-name"
       'name
@@ -116,6 +118,26 @@
       (expand-cond '(cond a b else other)))
 
 ;; let
+(test "empty let expands to lambda with no args"
+      '((fn () 1))
+      (expand-let '(let () 1)))
+
+(test "let with body expression expands to lambda"
+      '((fn () (* 2 2)))
+      (expand-let '(let () (* 2 2))))
+
+(test "let with body expressions expands to lambda"
+      '((fn () (* 2 2) (+ 1 1)))
+      (expand-let '(let () (* 2 2) (+ 1 1))))
+
+(test "expand let with one binding"
+      '((fn (x) x) 2)
+      (expand-let '(let (x 2) x)))
+
+(test "expand let with two bindings"
+      '((fn (x y) x) 1 2)
+      (expand-let '(let (x 1 y 2) x)))
+
 (test "let with one param" 1 (evaluate* '(let (x 1) x)))
 (test "let with two params" 2 (evaluate* '(let (x 1 y 1) (+ x y))))
 (test "let with longer sequence" 3 (evaluate* '(let () (+ 1 1) (+ 1 2))))
@@ -128,3 +150,15 @@
       1
       (hash-table-ref (evaluate* (alist->hash-table '((key: . 1)))) key:))
 
+;; call/cc
+(test "returns value normally"
+      1
+      (evaluate* '(call/cc (fn (ret) 1))))
+
+(test "call/cc can be returned from"
+      3
+      (evaluate*
+        '(+ 1
+           (call/cc
+             (fn (return)
+               (return 2))))))
