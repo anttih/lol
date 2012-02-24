@@ -37,5 +37,9 @@
 
 (let (cc (call/cc (fn (c) c)))
   (if (eq? cc 1)
-    (print "Non-local return")
+    (print "ok: Non-local return")
     (cc 1)))
+
+(print "Two times:")
+(print (call/cc (fn (c) (set! again c) "- first")))
+(again "- second")

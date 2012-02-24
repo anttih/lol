@@ -355,10 +355,9 @@
         ((application? s) (analyze-application s))
         (else (error "Unrecognized form"))))
 
-(define (evaluate sexpr env)
+(define (evaluate sexpr c env)
   (set! root-env env)
-  (call/cc (lambda (return)
-             ((analyze sexpr) env return))))
+  ((analyze sexpr) env c))
 
 (define (unspecified? v)
   (tagged-list? v 'unspecified))
