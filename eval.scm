@@ -51,6 +51,23 @@
           found
           (lookup-variable (cdr env) name)))))
 
+
+(define (frame-set-variable frame name value)
+    (let search-frame ((names (car frame))
+                       (values (cdr frame)))
+        (if (null? names)
+          #f
+          (if (eq? (car names) name)
+            (begin (set-car! values value) #t)
+            (search-frame (cdr names)
+                          (cdr values))))))
+
+(define (env-set-variable env name value)
+    (if (null? env)
+      (begin (define-variable! root-env name value) value)
+      (let ((succ (frame-set-variable (car env) name value)))
+        (if succ value (env-set-variable (cdr env) name value)))))
+
 (define (application? l) (pair? l))
 
 (define (parameter-list? s) (list? s))
@@ -138,8 +155,8 @@
                    (cadddr conds)
                    (process-cond (cddr conds)))))))
 
-(define (let? s)
-  (tagged-list? s 'let))
+(define (let? s) (tagged-list? s 'let))
+(define (set? s) (tagged-list? s 'set!))
 
 (define (primitive-procedure? p) (procedure? p))
 
@@ -260,6 +277,16 @@
 (define (analyze-let s)
   (analyze-application (expand-let s)))
 
+(define (analyze-set! s)
+  (let ((var (cadr s))
+        (val (analyze (caddr s))))
+    (lambda (env c)
+      (val env (make-set-cont c env var)))))
+
+(define (make-set-cont c env name)
+  (lambda (val) (c (env-set-variable env name val))))
+
+
 (define (make-def-cont c name env)
   (lambda (v)
      (define-variable! env name v)
@@ -318,6 +345,7 @@
         ((if? s) (analyze-if s))
         ((cond? s) (analyze-if (expand-cond s)))
         ((let? s) (analyze-let s))
+        ((set? s) (analyze-set! s))
         ((vector? s) (analyze-vector s))
         ((hash-table? s) (analyze-hash-table s))
         ((lambda? s) (analyze-lambda s))
@@ -328,6 +356,7 @@
         (else (error "Unrecognized form"))))
 
 (define (evaluate sexpr env)
+  (set! root-env env)
   (call/cc (lambda (return)
              ((analyze sexpr) env return))))
 

@@ -162,3 +162,16 @@
            (call/cc
              (fn (return)
                (return 2))))))
+
+(test "set! a binding" 4 (evaluate* '(let (x 1) (set! x 4) x)))
+
+(test "set! returns new value when existing binding not found" 2 (evaluate* '(set! y (+ 1 1))))
+(test "set! returns new value when existing binding found" 3 (evaluate* '(let (z 1) (set! z 3))))
+(test "set! value can be an expression" 2 (evaluate* '(set! x (- 3 1))))
+
+(test "setting a var sets the closest binding"
+      1
+      (evaluate* '(let (x 1)
+                    (let (x 2) 
+                      (set! x (+ x 2)))
+                    x)))
