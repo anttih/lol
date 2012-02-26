@@ -16,6 +16,8 @@
 (defprimitive < <)
 (defprimitive = =)
 (defprimitive eq? eq?)
+(defprimitive equal? equal?)
+(defprimitive not not)
 (defprimitive list list)
 (defprimitive null? null?)
 (defprimitive first car)
