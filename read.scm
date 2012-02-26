@@ -69,7 +69,7 @@
   (let next ((s (read-s close)))
 	(if (null? s)
 	  '()
-	  (cons `(,(car s) . ,(cadr s))
+	  (cons (cons (car s) (cadr s))
 			(next (cddr s))))))
 
 (define (atomic? s)
