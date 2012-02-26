@@ -25,7 +25,7 @@
 
 (def my-vector [1 2 3 4])
 
-(print (vector-ref my-vector 2))
+(print (nth my-vector 2))
 
 (def name "success")
 
