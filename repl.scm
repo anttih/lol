@@ -27,6 +27,7 @@
 (defprimitive hash-ref hash-table-ref)
 (defprimitive print print)
 (defprimitive display display)
+(defprimitive newline newline)
 (defprimitive current-milliseconds current-milliseconds)
 
 (define initial-env
