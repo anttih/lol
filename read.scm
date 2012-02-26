@@ -20,6 +20,9 @@
     (read-char)
     str))
 
+(define (swallow-comment)
+  (read-while (lambda (c) (not (eq? c #\newline)))))
+
 (define (char-symbol? c)
   (or (char-alphabetic? c)
       (not (eq? #f (memq c '(#\+ #\/ #\- #\= #\> #\< #\* #\! #\?))))))
@@ -32,6 +35,8 @@
 
 (define (read-keyword)
   (string->keyword (read-while char-symbol?)))
+
+(define (semicolon? c) (eq? c #\;))
 
 (define (open-paren? c) (eq? c #\())
 (define (close-paren? c) (eq? c #\)))
@@ -46,6 +51,7 @@
     (let ((next (peek-char)))
       (cond ((eof-object? next) (begin (read-char) '(eof)))
             ((char-whitespace? next) (begin (read-char) (next-token)))
+            ((semicolon? next) (begin (swallow-comment) (next-token)))
             ((open-paren? next) (begin (read-char) '(open-paren)))
             ((close-paren? next) (begin (read-char) '(close-paren)))
             ((open-curly? next) (begin (read-char) '(open-curly)))
