@@ -45,7 +45,7 @@
 ; lookup a binding in the environment
 (define (lookup-variable env name)
     (if (empty-environment? env)
-      (error (conc "Variable not bound: "  name))
+      (throw (conc "Variable not bound: "  name))
       (let ((found (lookup-variable-value (car env) name)))
         (if found
           found
@@ -204,13 +204,27 @@
                (analyze (cadddr s))
                (analyze-boolean 'false))))
     (lambda (env c)
-      (test env (make-if-cont c then alt env)))))
+      (test env (make-if-cont s c then alt env)))))
 
-      ;(if (test env) (then env) (alt env)))))
-(define (make-if-cont c then alt r)
+(define-record error msg calls)
+
+(define (throw msg)
+  (make-error msg '()))
+
+(define-syntax bail-if
+  (syntax-rules ()
+    ((_ source value cont alt ...)
+     (if (error? value)
+       (begin
+         (error-calls-set! value (cons source (error-calls value)))
+         (cont value))
+       (begin alt ...)))))
+
+(define (make-if-cont s c then alt r)
   (lambda (v)
-    (apply (if (true? v) then alt)
-           (list r c))))
+    (bail-if s v c
+             (apply (if (true? v) then alt)
+                    (list r c)))))
 
 (define (true? v)
   (not (eq? v #f)))

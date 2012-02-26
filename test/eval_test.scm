@@ -53,7 +53,8 @@
 (test "shadow value" 3 (lookup-variable test-env 'b))
 
 (define (evaluate* e)
-  (evaluate e (make-environment '(+ - / *) (list + - / *))))
+  (call/cc (lambda (return)
+    (evaluate e return (make-environment '(+ - / *) (list + - / *))))))
 
 (test "simple arithmetic" 2 (evaluate* '(+ 1 1)))
 (test "nested arithmetic" 5 (evaluate* '(+ (* 2 2) 1)))
@@ -97,7 +98,7 @@
 (test "compound procedures print a special string"
       "#<compound-procedure>"
       (let ((env (make-environment '() '())))
-        (evaluate '(def my (fn (x) x)) env)
+		(call/cc (lambda (c) (evaluate '(def my (fn (x) x)) c env)))
         (pretty (frame-values (car env)) env)))
 
 ;; if
@@ -175,3 +176,5 @@
                     (let (x 2) 
                       (set! x (+ x 2)))
                     x)))
+
+(test "error in if" '((if fail 1)) (error-calls (evaluate* '(if fail 1))))
