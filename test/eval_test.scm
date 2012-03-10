@@ -177,4 +177,11 @@
                       (set! x (+ x 2)))
                     x)))
 
-(test "error in if" '((if fail 1)) (error-calls (evaluate* '(if fail 1))))
+(test "error has a message" "Variable not bound: fail" (error-msg (evaluate* (vector 'fail 2))))
+(test "error in if test adds call history"
+      '((if fail 1))
+      (error-calls (evaluate* '(if fail 1))))
+
+(test "error in if consequent adds call history"
+      '((if 1 (+ fail 1)) (+ fail 1))
+      (error-calls (evaluate* '(if 1 (+ fail 1)))))

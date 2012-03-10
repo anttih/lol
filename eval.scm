@@ -166,7 +166,7 @@
 
   (let ((xs (map (lambda (val) (analyze val)) (vector->list s))))
     (lambda (env c)
-      (eval-list env (make-vector-cont c) xs))))
+      (eval-list c env (make-vector-cont c) xs))))
 
 (define (analyze-hash-table s)
   (define (interleave keys vals)
@@ -181,7 +181,7 @@
 
   (let ((vals (map analyze (hash-table-values s))))
     (lambda (env c)
-      (eval-list env (make-hash-cont c (hash-table-keys s)) vals))))
+      (eval-list c env (make-hash-cont c (hash-table-keys s)) vals))))
 
 (define (analyze-self-evaluating v)
   (lambda (env c) (c v)))
@@ -211,7 +211,7 @@
 (define (throw msg)
   (make-error msg '()))
 
-(define-syntax bail-if
+(define-syntax error-or
   (syntax-rules ()
     ((_ source value cont alt ...)
      (if (error? value)
@@ -220,11 +220,20 @@
          (cont value))
        (begin alt ...)))))
 
-(define (make-if-cont s c then alt r)
+(define (make-if-cont source cont then alt env)
   (lambda (v)
-    (bail-if s v c
-             (apply (if (true? v) then alt)
-                    (list r c)))))
+    (error-or source v cont ((if (true? v) then alt) env (make-catch-cont source cont)))))
+
+(define (error-add-history! error source)
+  (error-calls-set! error (cons source (error-calls error))))
+
+(define (make-catch-cont s c)
+  (lambda (e)
+    (if (error? e)
+      (begin
+        (error-add-history! e s)
+        (c e))
+      (c e))))
 
 (define (true? v)
   (not (eq? v #f)))
@@ -245,9 +254,12 @@
       (lambda (env c) (eval-seq procs env c))))
 
 ;; eval a list of values and return them to the continuation
-(define (eval-list env c args)
+(define (eval-list orig-cont env c args)
   (define (make-list-cont c env args)
-    (lambda (evaled) (eval-list env (make-gather-cont c evaled) (cdr args))))
+    (lambda (evaled)
+        (if (error? evaled)
+          (orig-cont evaled)
+          (eval-list orig-cont env (make-gather-cont c evaled) (cdr args)))))
 
   (define (make-gather-cont c evaled)
     (lambda (v) (c (cons evaled v))))
@@ -258,7 +270,7 @@
 
 (define (analyze-args s)
   (let ((args (map analyze s)))
-    (lambda (env c) (eval-list env c args))))
+    (lambda (env c) (eval-list c env c args))))
 
 (define (analyze-anon names seq)
   (let ((s (analyze-seq seq)))
@@ -312,11 +324,11 @@
     (lambda (env c)
       (value env (make-def-cont c name env)))))
 
-(define (make-apply-cont c args env)
-  (lambda (p) (args env (make-invoke-cont c p))))
+(define (make-apply-cont s c args env)
+  (lambda (p) (args env (make-invoke-cont s c p))))
 
-(define (make-invoke-cont c p)
-  (lambda (args) (invoke p args c)))
+(define (make-invoke-cont s c p)
+  (lambda (args) (error-or s args c (invoke p args c))))
 
 (define (analyze-application s)
   (let ((p (car s))
@@ -325,10 +337,10 @@
       ;; ((fn () ...) ...)
       (let ((f (analyze-lambda p)))
         (lambda (env c)
-          (f env (make-apply-cont c args env))))
+          (f env (make-apply-cont s c args env))))
       ;; (proc ...)
       (lambda (env c)
-        (args env (make-invoke-cont c (lookup-variable env p)))))))
+        (args env (make-invoke-cont s c (lookup-variable env p)))))))
 
 (define (compound-procedure? p)
   (tagged-list? p 'procedure))
@@ -349,7 +361,7 @@
 
   (let ((f (analyze-lambda (cadr s))))
     (lambda (env c)
-      (f env (make-apply-cont c (c-args c) env)))))
+      (f env (make-apply-cont s c (c-args c) env)))))
 
 (define (analyze s)
   (cond ((self-evaluating? s) (analyze-self-evaluating s))
