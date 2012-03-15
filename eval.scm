@@ -304,7 +304,7 @@
 (define (make-def-cont c name env)
   (lambda (v)
      (define-variable! env name v)
-     (c 'unspecified)))
+     (c 'inert)))
 
 (define (analyze-definition s)
   (let ((name (definition-name s))
@@ -371,5 +371,4 @@
   (set! root-env env)
   ((analyze sexpr) env c))
 
-(define (unspecified? v)
-  (tagged-list? v 'unspecified))
+(define (inert? v) (tagged-list? v 'inert))

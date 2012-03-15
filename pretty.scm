@@ -16,7 +16,7 @@
   (cond ((no-formatting? s) (format "~a" s))
         ((string? s) (format "\"~a\"" s))
         ((quoted? s) (format "(~a)" (join-values (cdr s))))
-        ((unspecified? s) "#<unspecified>")
+        ((inert? s) "#<inert>")
         ((primitive-procedure? s)
          "#<primitive procedure>")
         ((not (primitive-procedure? s))
