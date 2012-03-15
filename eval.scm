@@ -68,8 +68,6 @@
       (let ((succ (frame-set-variable (car env) name value)))
         (if succ value (env-set-variable (cdr env) name value)))))
 
-(define (application? l) (pair? l))
-
 (define (parameter-list? s) (list? s))
 
 (define (tagged-list? sexpr tag)
@@ -130,14 +128,7 @@
 (define (boolean-eval s)
   (if (eq? s 'true) #t #f))
 
-(define (quoted? e)
-  (tagged-list? e 'quote))
-
-(define (cond? s)
-  (tagged-list? s 'cond))
-
-(define (if? e)
-  (tagged-list? e 'if))
+(define (quoted? e) (tagged-list? e 'quote))
 
 (define (expand-cond s)
   (define (make-if test con alt)
@@ -154,9 +145,6 @@
                  (if (else? (cddr conds))
                    (cadddr conds)
                    (process-cond (cddr conds)))))))
-
-(define (let? s) (tagged-list? s 'let))
-(define (set? s) (tagged-list? s 'set!))
 
 (define (primitive-procedure? p) (procedure? p))
 
@@ -352,9 +340,6 @@
          (c (apply p args)))
         (else (error "Cannot invoke"))))
 
-(define (call/cc? s)
-  (tagged-list? s 'call/cc))
-
 (define (analyze-call/cc s)
   (define (c-args cc)
     (lambda (env c) (c (list cc))))
@@ -364,22 +349,23 @@
       (f env (make-apply-cont s c (c-args c) env)))))
 
 (define (analyze s)
-  (cond ((self-evaluating? s) (analyze-self-evaluating s))
-        ((boolean-value? s) (analyze-boolean s))
-        ((symbol? s) (analyze-variable s))
-        ((quoted? s) (analyze-quoted s))
-        ((if? s) (analyze-if s))
-        ((cond? s) (analyze-if (expand-cond s)))
-        ((let? s) (analyze-let s))
-        ((set? s) (analyze-set! s))
-        ((vector? s) (analyze-vector s))
-        ((hash-table? s) (analyze-hash-table s))
-        ((lambda? s) (analyze-lambda s))
-        ((sequence? s) (analyze-seq (cdr s)))
-        ((definition? s) (analyze-definition s))
-        ((call/cc? s) (analyze-call/cc s))
-        ((application? s) (analyze-application s))
-        (else (error "Unrecognized form"))))
+  (if (atom? s)
+    (cond ((self-evaluating? s) (analyze-self-evaluating s))
+          ((boolean-value? s) (analyze-boolean s))
+          ((symbol? s) (analyze-variable s))
+          ((vector? s) (analyze-vector s))
+          ((hash-table? s) (analyze-hash-table s)))
+    (case (car s)
+          ((quote) (analyze-quoted s))
+          ((if) (analyze-if s))
+          ((cond) (analyze-if (expand-cond s)))
+          ((let) (analyze-let s))
+          ((set!) (analyze-set! s))
+          ((fn) (analyze-lambda s))
+          ((do) (analyze-seq (cdr s)))
+          ((def) (analyze-definition s))
+          ((call/cc) (analyze-call/cc s))
+          (else (analyze-application s)))))
 
 (define (evaluate sexpr c env)
   (set! root-env env)
