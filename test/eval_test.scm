@@ -66,14 +66,6 @@
 
 (test "variables" 4 (evaluate* '(do (def a 3) (+ a 1))))
 
-(test "definition-name"
-      'name
-      (definition-name '(def name 1)))
-
-(test "definition-name returns car when param list present"
-      'name
-      (definition-name '(def (name) 1)))
-
 (test "define and apply lambda with no params"
       42
       (evaluate* '(do
@@ -83,7 +75,7 @@
 (test "define lambda"
       16
       (evaluate* '(do
-                   (def square (fn (x) (* x x)))
+                   (defn square (x) (* x x))
                    (square 4))))
                     
 (test "apply lambda at function position"

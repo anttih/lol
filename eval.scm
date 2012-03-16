@@ -5,18 +5,6 @@
 (define (definition? sexpr)
   (tagged-list? sexpr 'def))
        
-(define (definition-name e)
-  (let ((spec (cadr e)))
-    (cond ((atom? spec) spec)
-          (else (car spec)))))
-
-(define (analyze-definition-value e)
-  (let ((spec (cadr e)))
-    (cond ((atom? spec)
-           (analyze (caddr e)))
-          (else
-            (analyze-anon (cdr spec) (cddr e))))))
-
 (define (frame-bind frame name val)
     (cons (cons name (car frame))
           (cons val (cdr frame))))
@@ -307,10 +295,16 @@
      (c 'inert)))
 
 (define (analyze-definition s)
-  (let ((name (definition-name s))
-        (value (analyze-definition-value s)))
+  (let ((name (cadr s))
+        (value (analyze (caddr s))))
     (lambda (env c)
       (value env (make-def-cont c name env)))))
+
+(define (analyze-function-definition s)
+  (let ((name (cadr s))
+        (fun (analyze-anon (caddr s) (cdddr s))))
+    (lambda (env c)
+      (fun env (make-def-cont c name env)))))
 
 (define (make-apply-cont s c args env)
   (lambda (p) (args env (make-invoke-cont s c p))))
@@ -364,6 +358,7 @@
           ((fn) (analyze-lambda s))
           ((do) (analyze-seq (cdr s)))
           ((def) (analyze-definition s))
+          ((defn) (analyze-function-definition s))
           ((call/cc) (analyze-call/cc s))
           (else (analyze-application s)))))
 

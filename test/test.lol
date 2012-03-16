@@ -1,23 +1,23 @@
 
-(def (test name expected thunk)
+(defn test (name expected thunk)
   (let (res (thunk))
     (if (not (equal? res expected))
         (print "[FAIL] " name "    expected " expected " but got " res)
         (print "[PASS] " name))))
 
-(def (map f l)
+(defn map (f l)
   (if (null? l)
     (list)
     (cons (f (first l))
           (map f (rest l)))))
 
-(def (compose first second)
+(defn compose (first second)
   (fn (x) (first (second x))))
 
-(def (square x)
+(defn square (x)
   (* x x))
 
-(def (fact n)
+(defn fact (n)
   (if (= n 0)
     1
     (* n (fact (- n 1)))))
