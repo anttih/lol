@@ -1,7 +1,6 @@
 (require-extension test)
 (use srfi-1 srfi-69)
 (include "eval")
-(include "pretty")
 
 ; lambda
 (test "lambda with empty param list" #t (lambda? '(fn () 1)))
@@ -81,17 +80,6 @@
 (test "apply lambda at function position"
       1
       (evaluate* '((fn (x) x) 1)))
-
-;; Pretty printing
-(test "strings are quoted" "\"hello\"" (pretty "hello" '()))
-(test "numbers are just numbers" "42" (pretty 42 '()))
-(test "symbols are not quoted" "symbol" (pretty 'symbol '()))
-(test "quoted form prints a list of symbols" "(name 1)" (pretty '(quote name 1) '()))
-(test "compound procedures print a special string"
-      "#<compound-procedure>"
-      (let ((env (make-environment '() '())))
-		(call/cc (lambda (c) (evaluate '(def my (fn (x) x)) c env)))
-        (pretty (frame-values (car env)) env)))
 
 ;; if
 (test "evaluates consequence when true" 1 (evaluate* '(if true 1)))

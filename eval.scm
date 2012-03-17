@@ -292,7 +292,7 @@
 (define (make-def-cont c name env)
   (lambda (v)
      (define-variable! env name v)
-     (c 'inert)))
+     (c '(inert))))
 
 (define (analyze-definition s)
   (let ((name (cadr s))
