@@ -17,13 +17,20 @@
         ((string? s) (format "\"~a\"" s))
         ((quoted? s) (pretty (cadr s)))
         ((inert? s) "#<inert>")
-        ((error? s) (format "#<error \"~a\">" (error-msg s)))
+        ((error? s) (pretty-error s))
         ((primitive-procedure? s) "#<primitive procedure>")
         ((compound-procedure? s) "#<compound-procedure>")
         ((pair? s) (conc "(" (join-values s) ")"))
         ((hash-table? s) "#<hash-table>")
         ((vector? s) "#<vector>")
         (else "<Unrecognized form>")))
+
+(define (pretty-error e)
+  (conc "Error: " (error-msg e) "\n"
+        (fold (lambda (call s) (conc s "\n    " (pretty call)))
+              ""
+              (error-calls e))
+        " <--"))
 
 (define (prettyprint s)
   (print (pretty s)))
