@@ -170,7 +170,7 @@
   (lambda (env c) (c (lookup-variable env s))))
 
 (define (analyze-quoted s)
-  (let ((quoted (cdr s)))
+  (let ((quoted (cadr s)))
     (lambda (env c) (c quoted))))
 
 (define (analyze-if s)
