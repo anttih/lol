@@ -1,43 +1,12 @@
 (declare
   (unit repl)
-  (uses evaler pretty reader extras srfi-69))
-
-(define builtins '())
-
-(define-syntax defprimitive
-  (syntax-rules ()
-    ((_ name value) (set! builtins (cons (cons 'name value) builtins)))))
-
-(defprimitive + +)
-(defprimitive - -)
-(defprimitive * *)
-(defprimitive / /)
-(defprimitive > >)
-(defprimitive < <)
-(defprimitive = =)
-(defprimitive eq? eq?)
-(defprimitive equal? equal?)
-(defprimitive not not)
-(defprimitive list list)
-(defprimitive null? null?)
-(defprimitive first car)
-(defprimitive rest cdr)
-(defprimitive cons cons)
-(defprimitive nth vector-ref)
-(defprimitive hash-ref hash-table-ref)
-(defprimitive print print)
-(defprimitive display display)
-(defprimitive newline newline)
-(defprimitive current-milliseconds current-milliseconds)
-
-(define initial-env
-  (make-environment (map car builtins)
-					(map cdr builtins)))
+  (uses evaler pretty std reader extras srfi-69))
 
 (define (repl-)
   (call/cc
     (lambda (quit)
-      (let ((env (extend-env initial-env '(quit) (list quit))))
+      (let* ((q (make-primitive-procedure 0 #f (lambda () (quit #t))))
+             (env (extend-env initial-env '(quit) (list q))))
         (print "Welcome to LOL! Type (quit) to quit.")
         (let loop ()
           (display ";lol> ")

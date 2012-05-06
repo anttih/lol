@@ -16,6 +16,10 @@
 (test "read keyword" hello: (read-* ":hello"))
 
 (test "read s with two numbers" '(1 2) (read-* "(1 2)"))
+(test "read dotted pair" '(1 . 2) (read-* "(1 . 2)"))
+(test "read dotted pair with pair in cdr" '(1 . (2 3)) (read-* "(1 . (2 3))"))
+(test "read dotted pair in let" '((x . rest) (list 1 2)) (read-* "((x . rest) (list 1 2))"))
+
 (test "read proc call" '(+ 1 2) (read-* "(+ 1 2)"))
 (test "read nested s" '((proc)) (read-* "((proc))"))
 (test "read more complicated s-expression"

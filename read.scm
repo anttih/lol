@@ -36,7 +36,14 @@
 (define (read-keyword)
   (string->keyword (read-while char-symbol?)))
 
+(define (read-dot)
+  (read-char)
+  (if (not (char-whitespace? (peek-char)))
+    (error "Found dot in the wrong place")))
+
 (define (semicolon? c) (eq? c #\;))
+
+(define (dot? c) (eq? c #\.))
 
 (define (open-paren? c) (eq? c #\())
 (define (close-paren? c) (eq? c #\)))
@@ -52,6 +59,7 @@
       (cond ((eof-object? next) (begin (read-char) '(eof)))
             ((char-whitespace? next) (begin (read-char) (next-token)))
             ((semicolon? next) (begin (swallow-comment) (next-token)))
+            ((dot? next) (begin (read-dot) '(dot)))
             ((open-paren? next) (begin (read-char) '(open-paren)))
             ((close-paren? next) (begin (read-char) '(close-paren)))
             ((open-curly? next) (begin (read-char) '(open-curly)))
@@ -67,6 +75,7 @@
 (define (read-s close)
   (let ((token (read-next)))
     (cond ((eq? token 'eof) (error "Unexpected EOF"))
+          ((eq? token 'dot) (read-cdr))
           ((eq? token close) '())
           (else (cons token
                       (read-s close))))))
@@ -77,6 +86,12 @@
 	  '()
 	  (cons (cons (car s) (cadr s))
 			(next (cddr s))))))
+
+(define (read-cdr)
+  (let ((cdr* (read-next)))
+    (if (not (eq? (read-next) 'close-paren))
+      (error "missing list terminator")
+      cdr*)))
 
 (define (atomic? s)
   (or (eq? s 'keyword)
@@ -94,6 +109,7 @@
          (tag (car token)))
     (cond ((eq? tag 'eof) #!eof)
           ((atomic? tag) (cadr token))
+          ((eq? tag 'dot) 'dot)
           ((eq? tag 'open-paren) (read-s 'close-paren))
           ((eq? tag 'open-curly) (alist->hash-table (read-alist 'close-curly)))
           ((eq? tag 'open-bracket) (apply vector (read-s 'close-bracket)))

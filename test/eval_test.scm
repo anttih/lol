@@ -1,6 +1,7 @@
 (require-extension test)
 (use srfi-1 srfi-69)
 (include "eval")
+(include "std")
 
 ; lambda
 (test "lambda with empty param list" #t (lambda? '(fn () 1)))
@@ -53,10 +54,15 @@
 
 (define (evaluate* e)
   (call/cc (lambda (return)
-    (evaluate e return (make-environment '(+ - / *) (list + - / *))))))
+    (evaluate e return initial-env))))
 
+; primitive application
 (test "simple arithmetic" 2 (evaluate* '(+ 1 1)))
 (test "nested arithmetic" 5 (evaluate* '(+ (* 2 2) 1)))
+
+(test "n-ary primitive, one param"
+      (list 1)
+      (evaluate* '(list 1)))
 
 ; sequence
 (test "do block with empty body returns nil" '() (evaluate* '(do)))
@@ -81,6 +87,11 @@
       1
       (evaluate* '((fn (x) x) 1)))
 
+(test "arity error"
+      "ptrees do not match"
+      (error-msg (evaluate* '(do
+                    (defn proc (x) x)
+                    (proc)))))
 ;; if
 (test "evaluates consequence when true" 1 (evaluate* '(if true 1)))
 (test "evaluates alternate when false" 2 (evaluate* '(if false 1 2)))
@@ -118,6 +129,10 @@
 (test "expand let with two bindings"
       '((fn (x y) x) 1 2)
       (expand-let '(let (x 1 y 2) x)))
+
+(test "expand let when destructuring"
+      '((fn ((first . rest)) rest) (list 1 2))
+      (expand-let '(let ((first . rest) (list 1 2)) rest)))
 
 (test "let with one param" 1 (evaluate* '(let (x 1) x)))
 (test "let with two params" 2 (evaluate* '(let (x 1 y 1) (+ x y))))

@@ -75,8 +75,15 @@
 (define (lambda-sequence s)
   (cons 'do (cddr s)))
 
-(define (make-compound-procedure names seq env)
-  (list 'procedure names seq env))
+(define (make-compound-procedure ptree seq env)
+  (list 'procedure ptree seq env))
+
+(define (compound-procedure? p) (tagged-list? p 'procedure))
+
+(define (make-primitive-procedure arity n-ary-flag p)
+  (list 'primitive arity n-ary-flag p))
+
+(define (primitive-procedure? p) (tagged-list? p 'primitive))
 
 (define (proc-env p)
   (cadr p))
@@ -134,7 +141,6 @@
                    (cadddr conds)
                    (process-cond (cddr conds)))))))
 
-(define (primitive-procedure? p) (procedure? p))
 
 (define (analyze-vector s)
   (define (make-vector-cont c)
@@ -223,11 +229,11 @@
           ((car procs) env c))
         (c '())))
 
-  (define (make-do-cont s env c)
-    (lambda (v) (eval-seq (cdr s) env c)))
+  (define (make-do-cont procs env c)
+    (lambda (v) (error-or s v c (eval-seq (cdr procs) env c))))
 
   (let ((procs (map analyze s)))
-      (lambda (env c) (eval-seq procs env c))))
+      (lambda (env c) (eval-seq procs env (make-catch-cont s c)))))
 
 ;; eval a list of values and return them to the continuation
 (define (eval-list orig-cont env c args)
@@ -248,9 +254,9 @@
   (let ((args (map analyze s)))
     (lambda (env c) (eval-list c env c args))))
 
-(define (analyze-anon names seq)
+(define (analyze-anon ptree seq)
   (let ((s (analyze-seq seq)))
-    (lambda (env c) (c (make-compound-procedure names s env)))))
+    (lambda (env c) (c (make-compound-procedure ptree s env)))))
 
 (define (analyze-lambda s)
   (analyze-anon (cadr s) (cddr s)))
@@ -288,7 +294,6 @@
 (define (make-set-cont c env name)
   (lambda (val) (c (env-set-variable env name val))))
 
-
 (define (make-def-cont c name env)
   (lambda (v)
      (define-variable! env name v)
@@ -307,10 +312,39 @@
       (fun env (make-def-cont c name env)))))
 
 (define (make-apply-cont s c args env)
-  (lambda (p) (args env (make-invoke-cont s c p))))
+  (lambda (p) (args env (make-ptree-cont s (make-compound-invoke-cont s c p) p))))
 
-(define (make-invoke-cont s c p)
-  (lambda (args) (error-or s args c (invoke p args c))))
+(define (make-arity-check-cont c p)
+  (lambda (args)
+    (if (error? args)
+      (c args)
+      (if (or (= (length args) (cadr p))
+              (and (caddr p) ; n-ary
+                   (>= (length args) (cadr p))))
+        (c args)
+        (c (throw (conc "Expected " (cadr p) " arguments but got " (length args))))))))
+
+(define (make-ptree-cont s c p)
+  (define (ptree-match tree obj treem objm)
+    (cond ((symbol? tree) (cons (cons tree treem)
+                                (cons obj objm)))
+          ((null? tree)
+           (if (null? obj)
+             (cons treem objm)
+             (throw "ptree does not match")))
+          (else (if (not (pair? obj))
+                  (throw "ptrees do not match")
+                  (let* ((left (ptree-match (car tree) (car obj) treem objm)))
+                    (ptree-match (cdr tree) (cdr obj) (car left) (cdr left)))))))
+
+  (lambda (args)
+    (c (ptree-match (cadr p) args '() '()))))
+
+(define (make-primitive-invoke-cont s c p)
+  (lambda (args) (error-or s args c (c (apply (cadddr p) args)))))
+
+(define (make-compound-invoke-cont s c p)
+  (lambda (args) (error-or s args c ((caddr p) (extend-env (cadddr p) (car args) (cdr args)) c))))
 
 (define (analyze-application s)
   (let ((p (car s))
@@ -322,21 +356,17 @@
           (f env (make-apply-cont s c args env))))
       ;; (proc ...)
       (lambda (env c)
-        (args env (make-invoke-cont s c (lookup-variable env p)))))))
-
-(define (compound-procedure? p)
-  (tagged-list? p 'procedure))
-
-(define (invoke p args c)
-  (cond ((compound-procedure? p)
-         ((caddr p) (extend-env (cadddr p) (cadr p) args) c))
-        ((primitive-procedure? p)
-         (c (apply p args)))
-        (else (error "Cannot invoke"))))
+        (let ((proc (lookup-variable env p)))
+          (cond ((compound-procedure? proc)
+                 (args env (make-ptree-cont s (make-compound-invoke-cont s c proc) proc)))
+                ((primitive-procedure? proc)
+                 (args env (make-arity-check-cont (make-primitive-invoke-cont s c proc) proc)))
+                (else (error (conc "cannot invoke" proc)))))))))
 
 (define (analyze-call/cc s)
   (define (c-args cc)
-    (lambda (env c) (c (list cc))))
+    (let ((p (make-primitive-procedure 1 #f cc)))
+      (lambda (env c) (c (list p)))))
 
   (let ((f (analyze-lambda (cadr s))))
     (lambda (env c)
@@ -367,3 +397,4 @@
   ((analyze sexpr) env c))
 
 (define (inert? v) (tagged-list? v 'inert))
+
