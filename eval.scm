@@ -357,11 +357,12 @@
       ;; (proc ...)
       (lambda (env c)
         (let ((proc (lookup-variable env p)))
-          (cond ((compound-procedure? proc)
-                 (args env (make-ptree-cont s (make-compound-invoke-cont s c proc) proc)))
-                ((primitive-procedure? proc)
-                 (args env (make-arity-check-cont (make-primitive-invoke-cont s c proc) proc)))
-                (else (error (conc "cannot invoke" proc)))))))))
+          (error-or s proc c
+            (cond ((compound-procedure? proc)
+                   (args env (make-ptree-cont s (make-compound-invoke-cont s c proc) proc)))
+                  ((primitive-procedure? proc)
+                   (args env (make-arity-check-cont (make-primitive-invoke-cont s c proc) proc)))
+                (else (error (conc "cannot invoke " proc))))))))))
 
 (define (analyze-call/cc s)
   (define (c-args cc)

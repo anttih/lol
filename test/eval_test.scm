@@ -92,6 +92,11 @@
       (error-msg (evaluate* '(do
                     (defn proc (x) x)
                     (proc)))))
+
+(test "error when calling non-existent function"
+      "Variable not bound: fail"
+      (error-msg (evaluate* '(fail 1))))
+
 ;; if
 (test "evaluates consequence when true" 1 (evaluate* '(if true 1)))
 (test "evaluates alternate when false" 2 (evaluate* '(if false 1 2)))
