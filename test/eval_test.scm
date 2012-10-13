@@ -77,7 +77,7 @@
                    (def test (fn () 42))
                    (test))))
 
-(test "define lambda"
+(test "define function and apply"
       16
       (evaluate* '(do
                    (defn square (x) (* x x))
