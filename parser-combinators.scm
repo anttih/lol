@@ -73,16 +73,17 @@
     (map* (lambda (xs) (cons (car xs) (cadr xs)))
           (seq test (zero-many test))))
 
+(define whitespace (char-test (lambda (c) (and (char? c) (char-whitespace? c)))))
+
 (define (ltrim test)
   (map* cadr (seq (zero-many whitespace) test))) 
 
+(define to-integer (compose string->number list->string))
+
 (define (char= c) (char-test (lambda (v) (char=? v c))))
 (define integer (map* to-integer (ltrim (one-many numeric))))
-(define whitespace (char-test (lambda (c) (and (char? c) (char-whitespace? c)))))
 
 (define (char-in-list lst) (char-test (lambda (c) (memq c lst))))
-
-(define to-integer (compose string->number list->string))
 
 (define open-paren (char= #\())
 (define close-paren (char= #\)))
