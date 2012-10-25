@@ -45,10 +45,6 @@
              '(#\a #\b)
              ((seq alpha alpha) (string->stream "ab")))
 
-(test-parser "integer terminated by space"
-             12
-             ((terminated-with (char= #\space) integer) (string->stream "12 ")))
-
 (test-parser "one alpha is a symbol" 'a (symbol (string->stream "a")))
 (test-parser "symbols: special chars" '+ (symbol (string->stream "+")))
 
