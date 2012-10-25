@@ -1,4 +1,4 @@
-(use srfi-1 srfi-41)
+(use srfi-1 srfi-41 srfi-69)
 
 (define (any-char s)
   (if (and (stream-occupied? s)
@@ -88,6 +88,12 @@
 (define open-paren (char= #\())
 (define close-paren (char= #\)))
 
+(define open-bracket (char= #\[))
+(define close-bracket (char= #\]))
+
+(define open-curly (char= #\{))
+(define close-curly (char= #\}))
+
 (define double-quote (char= #\"))
 (define single-quote (char= #\'))
 
@@ -111,10 +117,28 @@
   (map* (compose list->string cadr)
         (ltrim (seq double-quote (zero-many string-chars) double-quote))))
 
+(define-syntax delayed
+  (syntax-rules ()
+      ((_ test)
+       (lambda (s) (test s)))))
+
+(define expr (one-of symbol integer str (delayed list*) (delayed vector*) (delayed hash-map*)))
+
 (define list*
   (map* cadr
         (seq (ltrim open-paren)
-             (one-many (one-of symbol integer str (lambda (s) (list* s))))
+             (one-many expr)
              (ltrim close-paren))))
 
-(define expr (one-of symbol integer str list*))
+(define vector*
+  (map* (lambda (xs) (apply vector (cadr xs)))
+        (seq (ltrim open-bracket)
+             (zero-many expr)
+             (ltrim close-bracket))))
+
+(define hash-map*
+  (map* (compose alist->hash-table cadr)
+        (seq (ltrim open-curly)
+             (zero-many (seq expr expr))
+             (ltrim close-curly))))
+
