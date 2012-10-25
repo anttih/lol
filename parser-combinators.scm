@@ -114,7 +114,7 @@
 (define list*
   (map* cadr
         (seq (ltrim open-paren)
-             (one-many (one-of symbol integer str list*))
+             (one-many (one-of symbol integer str (lambda (s) (list* s))))
              (ltrim close-paren))))
 
 (define expr (one-of symbol integer str list*))
