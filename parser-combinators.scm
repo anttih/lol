@@ -1,4 +1,8 @@
-(use srfi-1 srfi-41 srfi-69)
+(declare
+  (unit parser-combinators)
+  (uses srfi-1 srfi-69))
+
+(use srfi-41)
 
 (define (any-char s)
   (if (and (stream-occupied? s)
