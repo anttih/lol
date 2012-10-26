@@ -9,38 +9,46 @@
      (test name expected (let-values [((v s) expr)]
                                      v)))))
 
-(test-parser "one numeric char" #\1 (numeric (string->stream "1")))
-(test-parser "not a numeric" #f (numeric (string->stream "a")))
+(define (test-match name expected parser input)
+  (let-values [((v s) (parser (string->stream input)))]
+      (test name expected v)))
 
-(test-parser "numeric and 5" #\5 ((all-of numeric (char-test (lambda (v) (eq? v #\5))))
-                                  (string->stream "5")))
+(define (test-nomatch name parser input)
+  (let-values [((v s) (parser (string->stream input)))]
+      (test-assert name (not s))))
 
-(test-parser "one-many: just one" '(#\a) ((one-many alpha) (string->stream "a1")))
-(test-parser "one-many: two" '(#\a #\b) ((one-many alpha) (string->stream "ab")))
+(test-group "numeric"
+  (test-match "one numeric char" #\1 numeric "1")
+  (test-nomatch "character is not numeric" numeric "a"))
 
-(test-parser "alpha when alpha or numeric"
-             #\a
-             ((one-of alpha numeric) (string->stream "a")))
+(test-group "alpha"
+  (test-match "matches alpha" #\a alpha "a")
+  (test-nomatch "number is not alpha" alpha "5")
+  (test-nomatch "whitespace is not alpha" alpha "   "))
 
-(test-parser "numeric when alpha or numeric"
-             #\5
-             ((one-of alpha numeric) (string->stream "5a")))
+(test-group "one-of (or)"
+  (test-match "first matches" #\a (one-of alpha numeric) "a")
+  (test-match "second matches" #\5 (one-of alpha numeric) "5"))
 
-(test-parser "keywords: colon followed by symbol chars"
-             symbol-+:
-             (keyword (string->stream ":symbol-+")))
+(test-group "all-of (and)"
+  (test-nomatch "all need to match" (all-of numeric (char= #\5)) "6"))
 
-(test-parser "zero chars"
-             '()
-             ((zero-many alpha) (string->stream "")))
+(test-group "one-many"
+  (test-match "just one" '(#\a) (one-many alpha) "a1")
+  (test-match "two" '(#\a #\b) (one-many alpha) "ab"))
 
-(test-parser "zero or many numeric"
-             '(#\1 #\2)
-             ((zero-many numeric) (string->stream "12")))
+
+(test-group "zero-many"
+  (test-match "matches empty input" '() (zero-many alpha) "")
+  (test-match "matches many" '(#\1 #\2 #\3) (zero-many numeric) "123"))
 
 (test-parser "no returns true for all matching"
              #t
              ((no numeric) (string->stream "a")))
+
+(test-parser "keywords: colon followed by symbol chars"
+             symbol-+:
+             (keyword (string->stream ":symbol-+")))
 
 (test-parser "integer" 42 (integer (string->stream "42")))
 (test-parser "integer ignores following" 42 (integer (string->stream "42 asdf")))
@@ -72,3 +80,5 @@
 (test-parser "complex structure"
              '((hello world:) (+ 12 34) (something "else"))
              (list* (string->stream "((hello :world) (+ 12 34) (something \"else\"))")))
+
+(test-exit)
