@@ -82,6 +82,8 @@
 (define (ltrim test)
   (map* cadr (seq (zero-many whitespace) test))) 
 
+(define token ltrim)
+
 (define to-integer (compose string->number list->string))
 
 (define (char= c) (char-test (lambda (v) (char=? v c))))
@@ -116,17 +118,17 @@
 
 (define symbol
   (map* (compose string->symbol list->string flatten)
-        (ltrim symbol-seq)))
+        (token symbol-seq)))
 
 (define keyword
   (map* (compose string->keyword list->string cdr flatten)
-        (ltrim (seq (char= #\:) symbol-seq))))
+        (token (seq (char= #\:) symbol-seq))))
 
 (define string-chars (all-of (no double-quote) any-char))
 
 (define str
   (map* (compose list->string cadr)
-        (ltrim (seq double-quote (zero-many string-chars) double-quote))))
+        (token (seq double-quote (zero-many string-chars) double-quote))))
 
 (define-syntax delayed
   (syntax-rules ()
@@ -144,19 +146,19 @@
 
 (define list*
   (map* cadr
-        (seq (ltrim open-paren)
+        (seq (token open-paren)
              (one-many expr)
-             (ltrim close-paren))))
+             (token close-paren))))
 
 (define vector*
   (map* (lambda (xs) (apply vector (cadr xs)))
-        (seq (ltrim open-bracket)
+        (seq (token open-bracket)
              (zero-many expr)
-             (ltrim close-bracket))))
+             (token close-bracket))))
 
 (define hash-map*
   (map* (compose alist->hash-table cadr)
-        (seq (ltrim open-curly)
+        (seq (token open-curly)
              (zero-many (seq expr expr))
-             (ltrim close-curly))))
+             (token close-curly))))
 
