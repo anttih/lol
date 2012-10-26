@@ -26,6 +26,10 @@
              #\5
              ((one-of alpha numeric) (string->stream "5a")))
 
+(test-parser "keywords: colon followed by symbol chars"
+             symbol-+:
+             (keyword (string->stream ":symbol-+")))
+
 (test-parser "zero chars"
              '()
              ((zero-many alpha) (string->stream "")))
@@ -66,5 +70,5 @@
              (list* (string->stream "(hello (world))")))
 
 (test-parser "complex structure"
-             '((hello world) (+ 12 34) (something "else"))
-             (list* (string->stream "((hello world) (+ 12 34) (something \"else\"))")))
+             '((hello world:) (+ 12 34) (something "else"))
+             (list* (string->stream "((hello :world) (+ 12 34) (something \"else\"))")))

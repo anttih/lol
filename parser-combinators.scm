@@ -110,10 +110,17 @@
 
 (define symbol-special (char-in-list '(#\+ #\/ #\- #\= #\> #\< #\* #\! #\?)))
 
+(define symbol-seq
+  (seq (one-of alpha symbol-special)
+       (zero-many (one-of alpha-numeric symbol-special))))
+
 (define symbol
   (map* (compose string->symbol list->string flatten)
-        (ltrim (seq (one-of alpha symbol-special)
-                    (zero-many (one-of alpha-numeric symbol-special))))))
+        (ltrim symbol-seq)))
+
+(define keyword
+  (map* (compose string->keyword list->string cdr flatten)
+        (ltrim (seq (char= #\:) symbol-seq))))
 
 (define string-chars (all-of (no double-quote) any-char))
 
@@ -126,7 +133,14 @@
       ((_ test)
        (lambda (s) (test s)))))
 
-(define expr (one-of symbol integer str (delayed list*) (delayed vector*) (delayed hash-map*)))
+(define expr
+  (one-of symbol
+          integer
+          str
+          keyword
+          (delayed list*)
+          (delayed vector*)
+          (delayed hash-map*)))
 
 (define list*
   (map* cadr
