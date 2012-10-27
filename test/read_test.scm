@@ -1,5 +1,6 @@
-(require-extension test)
+(use test srfi-69)
 (include "read")
+(include "parser-combinators")
 
 (define-syntax read-*
   (syntax-rules ()
@@ -30,8 +31,8 @@
 (test "read input with newlines" '(proc) (read-* " \n (proc)\n  "))
 
 (test "read hash table expression"
-	  (alist->hash-table '((key: . val)))
-	  (read-* "{:key val}"))
+	  'val
+	  (hash-table-ref (read-* "{:key val}") key:))
 
 (test "read vector"
 	  (vector 'first 'second)

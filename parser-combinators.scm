@@ -156,9 +156,12 @@
              (zero-many expr)
              (token close-bracket))))
 
+(define (pair->dotted l)
+	(map (lambda (x) `(,(car x) . ,(cadr x))) l))
+
 (define hash-map*
   (map* (compose alist->hash-table cadr)
         (seq (token open-curly)
-             (zero-many (seq expr expr))
+             (map* pair->dotted (zero-many (seq expr expr)))
              (token close-curly))))
 

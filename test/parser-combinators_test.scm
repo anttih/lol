@@ -80,5 +80,3 @@
 (test-parser "complex structure"
              '((hello world:) (+ 12 34) (something "else"))
              (list* (string->stream "((hello :world) (+ 12 34) (something \"else\"))")))
-
-(test-exit)
