@@ -2,6 +2,7 @@
 (include "parser-combinators")
 
 (define (string->stream s) (list->stream (string->list s)))
+(define (string->token-stream s) (stream->token-stream (string->stream s)))
 
 (define-syntax test-parser
   (syntax-rules ()
@@ -44,39 +45,39 @@
 
 (test-parser "no returns true for all matching"
              #t
-             ((no numeric) (string->stream "a")))
+             ((no numeric) (string->token-stream "a")))
 
 (test-parser "keywords: colon followed by symbol chars"
              symbol-+:
-             (keyword (string->stream ":symbol-+")))
+             (keyword (string->token-stream ":symbol-+")))
 
-(test-parser "integer" 42 (integer (string->stream "42")))
-(test-parser "integer ignores following" 42 (integer (string->stream "42 asdf")))
+(test-parser "integer" 42 (integer (string->token-stream "42")))
+(test-parser "integer ignores following" 42 (integer (string->token-stream "42 asdf")))
 
 (test-parser "sequence of two numbers"
              '(#\a #\b)
              ((seq alpha alpha) (string->stream "ab")))
 
-(test-parser "one alpha is a symbol" 'a (symbol (string->stream "a")))
-(test-parser "symbols: special chars" '+ (symbol (string->stream "+")))
+(test-parser "one alpha is a symbol" 'a (symbol (string->token-stream "a")))
+(test-parser "symbols: special chars" '+ (symbol (string->token-stream "+")))
 
-(test-parser "string with alphas" "hello" (str (string->stream "\"hello\"")))
-(test-parser "string with numeric" "42" (str (string->stream "\"42\"")))
-(test-parser "string with newline" "hello\nworld" (str (string->stream "\"hello\nworld\"")))
+(test-parser "string with alphas" "hello" (str (string->token-stream "\"hello\"")))
+(test-parser "string with numeric" "42" (str (string->token-stream "\"42\"")))
+(test-parser "string with newline" "hello\nworld" (str (string->token-stream "\"hello\nworld\"")))
 
-(test-parser "empty list is illegal" #f (list* (string->stream "()")))
-(test-parser "list with one symbol" '(hello) (list* (string->stream "(hello)")))
-(test-parser "list ignores whitespace" '(hello) (list* (string->stream "(  hello  )")))
-(test-parser "list with a string" '("string") (list* (string->stream "(\"string\")")))
-(test-parser "list with an integer" '(42) (list* (string->stream "(42)")))
+(test-parser "empty list is illegal" #f (list* (string->token-stream "()")))
+(test-parser "list with one symbol" '(hello) (list* (string->token-stream "(hello)")))
+(test-parser "list ignores whitespace" '(hello) (list* (string->token-stream "(  hello  )")))
+(test-parser "list with a string" '("string") (list* (string->token-stream "(\"string\")")))
+(test-parser "list with an integer" '(42) (list* (string->token-stream "(42)")))
 (test-parser "list with all datatypes"
              '(hello "string" 567)
-             (list* (string->stream "(hello \"string\" 567)")))
+             (list* (string->token-stream "(hello \"string\" 567)")))
 
 (test-parser "nested list"
              '(hello (world))
-             (list* (string->stream "(hello (world))")))
+             (list* (string->token-stream "(hello (world))")))
 
 (test-parser "complex structure"
              '((hello world:) (+ 12 34) (something "else"))
-             (list* (string->stream "((hello :world) (+ 12 34) (something \"else\"))")))
+             (list* (string->token-stream "((hello :world) (+ 12 34) (something \"else\"))")))

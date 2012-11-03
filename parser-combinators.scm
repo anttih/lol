@@ -82,12 +82,7 @@
 (define (ltrim test)
   (map* cadr (seq (zero-many whitespace) test))) 
 
-(define token ltrim)
-
-(define to-integer (compose string->number list->string))
-
 (define (char= c) (char-test (lambda (v) (char=? v c))))
-(define integer (map* to-integer (ltrim (one-many numeric))))
 
 (define (char-in-list lst) (char-test (lambda (c) (memq c lst))))
 
@@ -113,55 +108,127 @@
 (define symbol-special (char-in-list '(#\+ #\/ #\- #\= #\> #\< #\* #\! #\?)))
 
 (define symbol-seq
-  (seq (one-of alpha symbol-special)
-       (zero-many (one-of alpha-numeric symbol-special))))
+  (map* flatten
+        (seq (one-of alpha symbol-special)
+             (zero-many (one-of alpha-numeric symbol-special)))))
 
-(define symbol
-  (map* (compose string->symbol list->string flatten)
-        (token symbol-seq)))
+(define (tokenify type)
+  (lambda (v) (cons type v)))
 
-(define keyword
-  (map* (compose string->keyword list->string cdr flatten)
-        (token (seq (char= #\:) symbol-seq))))
+(define t-symbol
+  (map* (compose (tokenify 'symbol) string->symbol list->string)
+        symbol-seq))
+
+(define t-integer
+  (map* (compose (tokenify 'integer) string->number list->string)
+        (one-many numeric)))
 
 (define string-chars (all-of (no double-quote) any-char))
 
-(define str
-  (map* (compose list->string cadr)
-        (token (seq double-quote (zero-many string-chars) double-quote))))
+(define t-string
+  (map* (compose (tokenify 'string) list->string cadr)
+        (seq double-quote (zero-many string-chars) double-quote)))
+
+(define t-keyword
+  (map* (compose (tokenify 'keyword) string->keyword list->string flatten cdr)
+        (seq (char= #\:) symbol-seq)))
+
+(define t-open-paren (map* (tokenify 'open-paren) open-paren))
+(define t-close-paren (map* (tokenify 'close-paren) close-paren))
+
+(define t-open-bracket (map* (tokenify 'open-bracket) open-bracket))
+(define t-close-bracket (map* (tokenify 'close-bracket) close-bracket))
+
+(define t-open-curly (map* (tokenify 'open-curly) open-curly))
+(define t-close-curly (map* (tokenify 'close-curly) close-curly))
+
+(define (token . parsers)
+  (map* cadr
+        (seq (zero-many whitespace)
+             (apply one-of parsers))))
+
+(define next-token
+    (token t-symbol
+           t-integer
+           t-string
+           t-keyword
+           t-open-paren
+           t-close-paren
+           t-open-bracket
+           t-close-bracket
+           t-open-curly
+           t-close-curly))
+
+(define stream->token-stream
+  (stream-lambda (s)
+    (let-values [((v cs) (next-token s))]
+        (stream-cons v (stream->token-stream cs)))))
+
+;;
+;; higher order parsers
+;;
+
+(define (any-token s)
+  (if (and (stream-occupied? s)
+           (pair? (stream-car s)))
+    (values (stream-car s) (stream-cdr s))
+    (values #f #f)))
+
+(define (token-type type)
+  (all-of any-token
+          (lambda (s)
+            (let [(t (stream-car s))]
+              (if (eq? (car t) type)
+                (values t (stream-cdr s))
+                (values #f #f))))))
+
+(define (match-token type)
+  (map* cdr (token-type type)))
+
+(define symbol (match-token 'symbol))
+(define keyword (match-token 'keyword))
+(define str (match-token 'string))
+(define integer (match-token 'integer))
+
+(define atomic (one-of symbol keyword str integer))
 
 (define-syntax delayed
   (syntax-rules ()
       ((_ test)
        (lambda (s) (test s)))))
 
+(define (set-error parser msg)
+  (lambda (s)
+    (let-values [((v cs) (parser s))]
+        (if (not cs)
+          (values (format msg (cdr (stream-car s))) #f)
+          (values v cs)))))
+
 (define expr
-  (one-of symbol
-          integer
-          str
-          keyword
-          (delayed list*)
-          (delayed vector*)
-          (delayed hash-map*)))
+  (set-error (one-of atomic
+                     (delayed list*)
+                     (delayed vector*)
+                     (delayed hash-map*))
+             "Error: unexpected token: ~A"))
 
 (define list*
   (map* cadr
-        (seq (token open-paren)
+        (seq (match-token 'open-paren)
              (one-many expr)
-             (token close-paren))))
+             (match-token 'close-paren))))
 
 (define vector*
   (map* (lambda (xs) (apply vector (cadr xs)))
-        (seq (token open-bracket)
+        (seq (match-token 'open-bracket)
              (zero-many expr)
-             (token close-bracket))))
+             (match-token 'close-bracket))))
 
 (define (pair->dotted l)
 	(map (lambda (x) `(,(car x) . ,(cadr x))) l))
 
 (define hash-map*
   (map* (compose alist->hash-table cadr)
-        (seq (token open-curly)
+        (seq (match-token 'open-curly)
              (map* pair->dotted (zero-many (seq expr expr)))
-             (token close-curly))))
+             (match-token 'close-curly))))
 

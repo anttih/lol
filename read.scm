@@ -5,4 +5,4 @@
 (use srfi-41)
 
 (define (read- . port)
-    (expr (port->stream (optional port (current-input-port)))))
+    (expr (stream->token-stream (port->stream (optional port (current-input-port))))))
