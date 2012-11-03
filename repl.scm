@@ -10,8 +10,14 @@
         (print "Welcome to LOL! Type (quit) to quit.")
         (let loop ()
           (display ";lol> ")
-          (evaluate (read-) prettyprint env)
+          (read-cb (lambda (sexpr) (evaluate sexpr prettyprint env)))
           (loop))))))
+
+(define (read-cb success)
+  (let-values [((v cs) (read-))]
+    (if (not cs)
+      (print v)
+      (success v))))
 
 (define (no-op v) 'void)
 (define (evaluate-from-file path)
