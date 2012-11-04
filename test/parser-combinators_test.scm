@@ -61,7 +61,7 @@
 (test-parser "string with numeric" "42" (str (string->token-stream "\"42\"")))
 (test-parser "string with newline" "hello\nworld" (str (string->token-stream "\"hello\nworld\"")))
 
-(test-parser "empty list is illegal" #f (list* (string->token-stream "()")))
+(test-parser "empty list " '() (list* (string->token-stream "()")))
 (test-parser "list with one symbol" '(hello) (list* (string->token-stream "(hello)")))
 (test-parser "list ignores whitespace" '(hello) (list* (string->token-stream "(  hello  )")))
 (test-parser "list with a string" '("string") (list* (string->token-stream "(\"string\")")))

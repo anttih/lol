@@ -206,7 +206,7 @@
 (define list*
   (map* cadr
         (seq (match-token 'open-paren)
-             (one-many expr)
+             (zero-many expr)
              (match-token 'close-paren))))
 
 (define vector*
