@@ -12,7 +12,7 @@
 (test "read symbol" 'hello (read-* "hello"))
 (test "read symbol with special chars" 'a+-*/=<>!? (read-* "a+-*/=<>!?"))
 (test "ignore comment line" 'symbol (read-* ";comment\nsymbol"))
-(test "ignore comment at the end" #!eof (read-* ";comment"))
+(test "ignore comment at the end" #f (read-* ";comment"))
 
 (test "read keyword" hello: (read-* ":hello"))
 

@@ -32,6 +32,13 @@
               (loop (cdr tests))
               (values c cs)))))))
 
+(define (no test)
+  (lambda (s)
+    (let-values [((v cs) (test s))]
+        (if (not cs)
+          (values #t s)
+          (values #f #f)))))
+
 (define (char-test t?)
   (all-of
     any-char
@@ -40,6 +47,13 @@
         (if (t? c)
           (values c (stream-cdr s))
           (values #f #f))))))
+
+(define (char-in-list lst) (char-test (lambda (c) (memq c lst))))
+(define (char= c) (char-test (lambda (v) (char=? v c))))
+(define (not-char c) (char-test (lambda (v) (not (char=? v c)))))
+(define whitespace (char-test (lambda (c) (and (char? c) (char-whitespace? c)))))
+
+(define semicolon (char= #\;))
 
 (define numeric (char-test char-numeric?))
 (define alpha (char-test char-alphabetic?))
@@ -77,14 +91,11 @@
     (map* (lambda (xs) (cons (car xs) (cadr xs)))
           (seq test (zero-many test))))
 
-(define whitespace (char-test (lambda (c) (and (char? c) (char-whitespace? c)))))
+
+(define comment (seq semicolon (zero-many (not-char #\newline)) (char= #\newline)))
 
 (define (ltrim test)
   (map* cadr (seq (zero-many whitespace) test))) 
-
-(define (char= c) (char-test (lambda (v) (char=? v c))))
-
-(define (char-in-list lst) (char-test (lambda (c) (memq c lst))))
 
 (define open-paren (char= #\())
 (define close-paren (char= #\)))
@@ -97,13 +108,6 @@
 
 (define double-quote (char= #\"))
 (define single-quote (char= #\'))
-
-(define (no test)
-  (lambda (s)
-    (let-values [((v cs) (test s))]
-        (if (not cs)
-          (values #t s)
-          (values #f #f)))))
 
 (define symbol-special (char-in-list '(#\+ #\/ #\- #\= #\> #\< #\* #\! #\?)))
 
@@ -142,9 +146,12 @@
 (define t-open-curly (map* (tokenify 'open-curly) open-curly))
 (define t-close-curly (map* (tokenify 'close-curly) close-curly))
 
+(define whitespace-or-comment
+  (zero-many (one-of (one-many whitespace) comment)))
+
 (define (token . parsers)
   (map* cadr
-        (seq (zero-many whitespace)
+        (seq whitespace-or-comment
              (apply one-of parsers))))
 
 (define next-token
@@ -162,7 +169,9 @@
 (define stream->token-stream
   (stream-lambda (s)
     (let-values [((v cs) (next-token s))]
-        (stream-cons v (stream->token-stream cs)))))
+        (if (not cs)
+          stream-null
+          (stream-cons v (stream->token-stream cs))))))
 
 ;;
 ;; higher order parsers
@@ -199,10 +208,12 @@
 
 (define (set-error parser msg)
   (lambda (s)
-    (let-values [((v cs) (parser s))]
-        (if (not cs)
-          (values (format msg (cdr (stream-car s))) #f)
-          (values v cs)))))
+    (if (stream-null? s)
+      (values #f #f)
+      (let-values [((v cs) (parser s))]
+          (if (not cs)
+            (values (format msg (cdr (stream-car s))) #f)
+            (values v cs))))))
 
 (define expr
   (set-error (one-of atomic
