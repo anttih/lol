@@ -32,13 +32,6 @@
               (loop (cdr tests))
               (values c cs)))))))
 
-(define (no test)
-  (lambda (s)
-    (let-values [((v cs) (test s))]
-        (if (not cs)
-          (values #t s)
-          (values #f #f)))))
-
 (define (char-test t?)
   (all-of
     any-char
@@ -127,7 +120,7 @@
   (map* (compose (tokenify 'integer) string->number list->string)
         (one-many numeric)))
 
-(define string-chars (all-of (no double-quote) any-char))
+(define string-chars (not-char #\"))
 
 (define t-string
   (map* (compose (tokenify 'string) list->string cadr)

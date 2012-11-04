@@ -43,10 +43,6 @@
   (test-match "matches empty input" '() (zero-many alpha) "")
   (test-match "matches many" '(#\1 #\2 #\3) (zero-many numeric) "123"))
 
-(test-parser "no returns true for all matching"
-             #t
-             ((no numeric) (string->token-stream "a")))
-
 (test-parser "keywords: colon followed by symbol chars"
              symbol-+:
              (keyword (string->token-stream ":symbol-+")))
