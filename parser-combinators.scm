@@ -90,18 +90,6 @@
 (define (ltrim test)
   (map* cadr (seq (zero-many whitespace) test))) 
 
-(define open-paren (char= #\())
-(define close-paren (char= #\)))
-
-(define open-bracket (char= #\[))
-(define close-bracket (char= #\]))
-
-(define open-curly (char= #\{))
-(define close-curly (char= #\}))
-
-(define double-quote (char= #\"))
-(define single-quote (char= #\'))
-
 (define symbol-special (char-in-list '(#\+ #\/ #\- #\= #\> #\< #\* #\! #\?)))
 
 (define symbol-seq
@@ -124,20 +112,20 @@
 
 (define t-string
   (map* (compose (tokenify 'string) list->string cadr)
-        (seq double-quote (zero-many string-chars) double-quote)))
+        (seq (char= #\") (zero-many string-chars) (char= #\"))))
 
 (define t-keyword
   (map* (compose (tokenify 'keyword) string->keyword list->string flatten cdr)
         (seq (char= #\:) symbol-seq)))
 
-(define t-open-paren (map* (tokenify 'open-paren) open-paren))
-(define t-close-paren (map* (tokenify 'close-paren) close-paren))
+(define t-open-paren (map* (tokenify 'open-paren) (char= #\()))
+(define t-close-paren (map* (tokenify 'close-paren) (char= #\))))
 
-(define t-open-bracket (map* (tokenify 'open-bracket) open-bracket))
-(define t-close-bracket (map* (tokenify 'close-bracket) close-bracket))
+(define t-open-bracket (map* (tokenify 'open-bracket) (char= #\[)))
+(define t-close-bracket (map* (tokenify 'close-bracket) (char= #\])))
 
-(define t-open-curly (map* (tokenify 'open-curly) open-curly))
-(define t-close-curly (map* (tokenify 'close-curly) close-curly))
+(define t-open-curly (map* (tokenify 'open-curly) (char= #\{)))
+(define t-close-curly (map* (tokenify 'close-curly) (char= #\})))
 
 (define whitespace-or-comment
   (zero-many (one-of (one-many whitespace) comment)))
