@@ -30,7 +30,7 @@
 (defprimitive cons cons 2 #f)
 (defprimitive nth vector-ref 2 #f)
 (defprimitive hash-ref hash-table-ref 2 #f)
-(defprimitive print print 1 #f)
+(defprimitive print print 1 n-ary)
 (defprimitive display display 1 #f)
 (defprimitive newline newline 0 #f)
 (defprimitive current-milliseconds current-milliseconds 0 #f)
