@@ -5,4 +5,8 @@
 (use srfi-41)
 
 (define (read- . port)
-    (expr (stream->token-stream (port->stream (optional port (current-input-port))))))
+  (let [(port (optional port (current-input-port)))]
+    (let-values [((v cs) (expr (stream->token-stream (port->stream port))))]
+      (if (not cs)
+        (if v (error v) #!eof)
+        v))))

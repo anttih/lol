@@ -33,4 +33,4 @@
         " <--"))
 
 (define (prettyprint s)
-  (print (pretty s)))
+  (display (pretty s)))
